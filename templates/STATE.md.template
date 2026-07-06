@@ -1,0 +1,109 @@
+---
+harness_kit_version: "{{KIT_VERSION}}"
+bootstrapped_at: "{{BOOTSTRAP_DATE}}"
+model_policy: "{{MODEL_POLICY}}"  # inherit/high/medium/low - model_policy.py set 실행 후 /sync_brain 으로 갱신
+---
+
+# {{PROJECT_UPPER}}_STATE
+
+> **마지막 갱신**: YYYY-MM-DD HH:mm KST
+>
+> 이 파일은 **시점 정보** 만 담는다. 영구적 지식은 [`{{PROJECT_UPPER}}_BRAIN.md`](./{{PROJECT_UPPER}}_BRAIN.md) 참조.
+> 갱신 트리거: `/sync_brain` 슬래시.
+
+---
+
+## 1. 현재 Phase 상태
+
+| # | Phase | 상태 | 근거 |
+|---|---|---|---|
+| 0 | 하네스 부트스트랩 | ⬜ | 신규 프로젝트 - onboarding kit 적용 진행 |
+| 1 | {{PHASE_1_TITLE}} | ⬜ | {{PHASE_1_NOTE}} |
+| 2 | {{PHASE_2_TITLE}} | ⬜ | {{PHASE_2_NOTE}} |
+| ... | ... | ... | ... |
+
+상태 표기: ✅ 완료 / 🚧 진행 / ⬜ 미착수
+
+---
+
+## 2. git 저장소
+
+```
+브랜치: {{CURRENT_BRANCH}}
+HEAD:   {{CURRENT_COMMIT_SHA}}
+원격:   {{REMOTE_STATUS}}
+```
+
+최근 commit (mtime 순):
+```
+{{RECENT_COMMITS}}
+```
+
+---
+
+## 3. 빌드 구성 (현 시점)
+
+| 항목 | 값 |
+|---|---|
+| versionCode | {{VERSION_CODE}} |
+| versionName | {{VERSION_NAME}} |
+| {{KEY_BUILD_ITEM}} | {{KEY_BUILD_VALUE}} |
+
+---
+
+## 4. 구현 화면 / 컴포넌트 목록
+
+| 항목 | 위치 | 상태 |
+|---|---|---|
+| {{COMPONENT_1}} | `{{LOCATION_1}}` | ⬜ |
+| ... | ... | ... |
+
+상태가 ✅ 인 항목은 단말/브라우저 실측 검증을 통과한 것.
+
+---
+
+## 5. 시스템 권한 환경 가정
+
+- {{PERMISSION_ENV_ASSUMPTION}}
+
+---
+
+## 6. 최근 task 요약
+
+| TS | slug | 결과 | AC | commit | 비고 |
+|---|---|---|---|---|---|
+| {{TASK_TS_1}} | `{{TASK_SLUG_1}}` | {{TASK_RESULT_1}} | {{TASK_AC_1}} | {{TASK_COMMIT_1}} | {{TASK_NOTE_1}} |
+| ... | ... | ... | ... | ... | ... |
+
+상세는 각 `.agent/tasks/task_<TS>_<slug>/` 폴더 참조.
+
+---
+
+## 7. 메타
+
+- 이 파일 자체의 마지막 sync_brain: YYYY-MM-DD HH:mm KST
+- 다음 검토 예정 시점: (필요 시)
+- 미해결 follow-up: (있다면 나열)
+- 적용 킷 버전: {{KIT_VERSION}} (업데이트 시 CHANGELOG 대조)
+
+<!--
+플레이스홀더 가이드:
+- {{PROJECT_UPPER}}: 대문자 슬러그
+- {{PHASE_*}}: Phase 단계 제목 + 근거. 초기 작성 시 ⬜ 로 시작
+- {{CURRENT_BRANCH}}: 현재 git 브랜치
+- {{CURRENT_COMMIT_SHA}}: 현재 HEAD SHA
+- {{REMOTE_STATUS}}: 원격 동기화 상태
+- {{RECENT_COMMITS}}: git log --oneline -5 결과
+- {{VERSION_CODE/NAME}}: 빌드 시점 버전
+- {{COMPONENT_*}}: 화면/컴포넌트
+- {{TASK_TS_*}}: task 타임스탬프
+- {{TASK_SLUG_*}}: task slug
+- {{TASK_RESULT_*}}: PASS / FAIL / 진행
+- {{TASK_AC_*}}: eval 의 ac_pass, 예: 5/5
+- {{TASK_COMMIT_*}}: 해당 task 의 커밋 short SHA
+- {{KIT_VERSION}}: 부트스트랩에 사용한 킷 버전 - 킷 CHANGELOG 의 최신 버전 (v 접두 없이). 예: 1.5.0
+- {{BOOTSTRAP_DATE}}: YYYY-MM-DD
+- {{MODEL_POLICY}}: 부트스트랩 시 선택한 model 정책, 기본값 inherit
+
+신규 프로젝트는 §1 의 Phase 0 만 채운 상태로 시작. 작업 진행에 따라 행 추가.
+-->

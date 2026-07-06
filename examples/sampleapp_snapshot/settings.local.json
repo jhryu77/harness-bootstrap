@@ -1,0 +1,68 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(./gradlew:*)",
+      "Bash(./gradlew.bat:*)",
+      "Bash(gradlew:*)",
+      "Bash(gradlew.bat:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python:*)",
+      "Bash(pip install *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(echo \"exit_code: $?\")",
+      "Bash(echo \"exit:$?\")",
+      "Bash(echo \"exit=$?\")",
+      "Bash(mkdir -p tmp)",
+      "Bash(mkdir -p .agent/tasks)",
+      "Bash(mkdir -p .agent/tasks/archive)",
+      "Bash(find .agent/tasks -maxdepth 1 -type d -name \"task_*\" -mmin +120)",
+      "Bash(find .agent/tasks -maxdepth 1 -type d -name \"task_harness_*\" -mmin +120)",
+      "Bash(read -r d)",
+      "Bash(xargs grep *)",
+      "Bash(grep -E \"\\\\.\\(kt|kts\\)$\")",
+      "Bash([ -d \"$d\" ])",
+      "Bash([ -f \"$f\" ])",
+      "Read(<YOUR_PROJECT_ROOT>/**)",
+      "Bash([ -d \"<YOUR_PROJECT_ROOT>/$d\" ])",
+      "Bash([ -f \"<YOUR_PROJECT_ROOT>/$f\" ])",
+      "Bash(adb devices *)",
+      "Bash(adb shell *)",
+      "Bash(adb install *)",
+      "Bash(adb uninstall *)",
+      "Bash(adb logcat *)",
+      "Bash(adb kill-server *)",
+      "Bash(adb start-server *)",
+      "Bash(adb version *)",
+      "Bash(adb *)",
+      "mcp__android-debug-bridge-mcp__capture_screenshot",
+      "mcp__android-debug-bridge-mcp__capture_ui_dump",
+      "mcp__android-debug-bridge-mcp__list_apps",
+      "mcp__android-debug-bridge-mcp__open_app",
+      "Bash(brew list *)",
+      "Bash(brew --version)",
+      "Read(//Applications/**)",
+      "Read(//opt/homebrew/share/**)",
+      "Read(//opt/homebrew/Caskroom/**)",
+      "Read(<YOUR_SIBLING_ROOT>/**)",
+      "Edit(<YOUR_SIBLING_ROOT>/**)",
+      "Write(<YOUR_SIBLING_ROOT>/**)",
+      "Bash(npx tsc *)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .agent/scripts/ci_gate_sampleapp.py"
+          }
+        ]
+      }
+    ]
+  }
+}

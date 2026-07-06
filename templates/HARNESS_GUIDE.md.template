@@ -1,0 +1,225 @@
+# {{PROJECT_TITLE}} - 하네스 운영 매뉴얼
+
+> Claude Code 하네스의 운영 매뉴얼. 슬래시 / 서브에이전트 / task / CI Gate / archive 사용법.
+
+---
+
+## 1. 슬래시 커맨드 표
+
+| 슬래시 | 영역 | 단계 | 진입 |
+|---|---|---|---|
+| `/read_{{PROJECT}}` | 일반 | 워밍업 | 메인 |
+| `/plan_agent_{{PROJECT}}` | 일반 | plan | plan_{{PROJECT}} 서브에이전트 |
+| `/dev_{{PROJECT}}` | 일반 | dev | 메인 (Edit/Write) |
+| `/eval_agent_{{PROJECT}}` | 일반 | eval | eval_{{PROJECT}} 서브에이전트 |
+| `/test_{{PROJECT}}` | 일반 | 보조 | 메인 (수동 체크리스트) |
+| `/sync_brain` | 후처리 | STATE 갱신 | 메인 |
+| `/commit_push` | 후처리 | git 자동화 | 메인 |
+| `/plan_agent_harness` | 메타 | plan | plan_harness 서브에이전트 |
+| `/dev_harness` | 메타 | dev | 메인 |
+| `/eval_agent_harness` | 메타 | eval | eval_harness 서브에이전트 |
+{{RELEASE_SLASH_ROWS}}
+
+---
+
+## 2. 서브에이전트 표
+
+| 이름 | 권한 (tools) | Write 경로 | 책임 |
+|---|---|---|---|
+| **plan_{{PROJECT}}** | Read, Glob, Grep, Bash, Write, TaskCreate, TaskList | `.agent/tasks/task_<TS>/` 만 | plan.md + tasklist.md 작성 |
+| **eval_{{PROJECT}}** | Read, Glob, Grep, Bash, TaskList + `permissionMode: plan` | (없음 - result 텍스트 반환, 메인 세션이 기록) | task 산출물 + 빌드 검증 |
+| **plan_harness** | Read, Glob, Grep, Bash, Write, TaskCreate, TaskList | `.agent/tasks/task_harness_<TS>/` 만 | 하네스 변경 계획 |
+| **eval_harness** | Read, Glob, Grep, Bash, TaskList + `permissionMode: plan` | (없음 - result 텍스트 반환, 메인 세션이 기록) | 하네스 무결성 점검 |
+{{RELEASE_AGENT_ROWS}}
+
+---
+
+## 3. task 폴더 구조
+
+```
+.agent/tasks/
+├── task_<YYYYMMDD>_<HHMM>_<slug>/
+│   ├── plan.md                  # plan_agent 산출물
+│   ├── tasklist.md              # plan_agent 산출물
+│   └── {{PROJECT}}.result       # eval 반환 YAML 을 메인 세션이 저장
+├── archive/               # status: done (또는 mtime fallback) 시 이동
+└── (활성 task 폴더들)
+```
+
+archive 룰 - 스크립트가 있으면 우선: `python .agent/scripts/archive_tasks.py --apply` (status: done 이동 + frontmatter 없는 폴더만 mtime fallback).
+
+스크립트 없을 때 fallback (mtime 기준):
+
+```bash
+find .agent/tasks -maxdepth 1 -type d -name "task_*" -mmin +120 \
+  -exec mv {} .agent/tasks/archive/ \;
+```
+
+PowerShell 등가:
+
+```powershell
+Get-ChildItem .agent/tasks -Directory -Filter "task_*" | Where-Object { $_.LastWriteTime -lt (Get-Date).AddMinutes(-120) } | Move-Item -Destination .agent/tasks/archive
+```
+
+plan_agent 진입 시 첫 단계로 자동 실행.
+
+---
+
+## 4. CI Gate 검사 항목
+
+`.agent/scripts/ci_gate_{{PROJECT}}.py` 가 매 Edit/Write 후 자동 실행.
+
+| 검사 | 상세 | 위반 시 |
+|---|---|---|
+| 임시 파일 위치 | `tmp_*` `verify_*` `diag_*` `check_*` 루트 직접 생성 차단 | stderr FAIL |
+| 시크릿 패턴 | JWT / AWS / Google API / GitHub·GitLab·Slack 토큰 / `sk-` 계열 API 키 / PEM Private Key·인증서 | stderr WARN |
+| FROZEN 존 (하네스 경로 Write/Edit) | dev_harness 플로우 밖이면 중단 신호 | stderr WARN |
+{{CI_GATE_LANG_ROW}}
+
+프로젝트별 확장: `.agent/config/security_patterns.json` (추가만 허용).
+
+위반 시 stderr → Claude 컨텍스트 자동 주입.
+
+---
+
+## 5. 스크립트 자산 (선택)
+
+| 스크립트 | 역할 | 실행 |
+|---|---|---|
+| `ci_gate_{{PROJECT}}.py` | PostToolUse 정적 검증 (기본) | hook 자동 |
+| `archive_tasks.py` | status 기준 task 아카이브 (dry-run 기본) | plan 진입 시 `--apply` |
+| `harness_doctor.py` | 설치 무결성 진단 (frontmatter/hook/드리프트) | 수동 / 새 클론 직후 |
+| `harness_manifest.py` | 배포 파일 해시 manifest (업데이트 대조) | 부트스트랩 시 `generate` |
+| `pre_gate.py` | PreToolUse 커밋 게이트 + 위험 명령 차단 | **opt-in** (`settings.pretooluse.json.example`) |
+| `stop_gate.py` | Stop 훅 advisory - 턴 종료 시 변경 파일 광역 검사 (차단 없음) | **opt-in** (`settings.pretooluse.json.example`) |
+| `model_policy.py` | 역할별 model 정책 적용/조회 (high/medium/low/inherit) | 부트스트랩 시 1회 + 언제든 set/show |
+| `glm_mode.py` | GLM(z.ai) 라우팅 Claude Code 를 tmux 새 창에 띄우는 수동 유틸리티 | **실험적/opt-in**, tmux 필요 |
+
+### 모델 정책
+
+기본은 `model: inherit` 이다. 프로젝트 성격에 맞춰 정책을 바꾸려면 `model_policy.py set <tier>` 로 적용하고, 확인은 `show` 로 한다. 상세 매핑표는 `05_subagent_design.md` 참조.
+
+### GLM 병행 (실험적)
+
+`glm_mode.py` 로 GLM 라우팅 Claude Code 를 tmux 새 창에 띄울 수 있다 (설정 1회 + `spawn`). 자동 위임이 아니다 - 사람이 직접 작업을 나눈다. 상세는 `06_ci_gate.md` 참조.
+
+모두 Python 표준 라이브러리만 사용하는 선택 자산 - 없어도 하네스는 동작한다.
+
+킷 업데이트 절차: 킷 저장소의 `UPGRADE.md` 참조.
+
+---
+
+## 6. 세션 핸드오프 - 3블록 규칙
+
+세션 경계에서 컨텍스트 손실을 줄이는 paste-ready 인계 - STATE.md(영구 기록)와 역할 분담 (핸드오프는 즉시 재개용 휘발 출력).
+
+트리거 3종:
+
+1. **컨텍스트 임계치 접근** - 긴 세션에서 컨텍스트 한계가 가까워질 때
+2. **task 완료** - eval PASS 확정 시
+3. **/commit_push 완료** - 푸시 직후
+
+3블록 구성:
+
+| 블록 | 내용 |
+|---|---|
+| 전제검증 | resume 시 최초 확인 명령 (커밋 SHA 확인 + `/read_{{PROJECT}}` 로 BRAIN/STATE 로드) |
+| 실행 명령 | AC 표 핵심 검증 재현 명령 1~3개 |
+| 다음 액션 | follow_up / 후속 task 후보 |
+
+출력 시점: `/commit_push` 는 푸시 후 **자동 출력**, 나머지 트리거(컨텍스트 임계치 / task 완료)는 사용자가 "핸드오프" 라고 요청 시 출력.
+
+---
+
+## 7. 비타협 항목
+
+상세는 `CLAUDE.md §6` + `{{PROJECT_UPPER}}_BRAIN.md §9` 참조.
+
+요약: {{IMMUTABLES_BRIEF}}
+
+---
+
+## 8. 폐기 자산 (Deprecated Assets)
+
+슬래시/서브에이전트를 개명·폐기하면 이 표에 기록한다. 폐기 이름 호출 요청 시 **거부하고 대체 이름을 안내**한다.
+
+| 폐기 이름 | 대체 | 폐기 시점 | 사유 |
+|---|---|---|---|
+| (없음 - 폐기 자산 발생 시 기록) | | | |
+
+---
+
+## 9. 자주 묻는 질문
+
+### Q. task 폴더가 archive 됐어요 - 다시 활성으로 꺼낼 수 있나요?
+
+```bash
+mv .agent/tasks/archive/task_<TS>_<slug> .agent/tasks/
+```
+
+mtime 도 자동 갱신되므로 다시 archive 되기까지 120분 여유. 단 plan.md frontmatter 가 `status: done` 인 폴더는 archive_tasks.py --apply 에서 즉시 재아카이브되므로, 다시 작업하려면 `status: active` 로 되돌릴 것.
+
+### Q. CI Gate hook 이 작동 안 해요
+
+```bash
+python -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py && echo "py_compile OK"
+python -c "import json; json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK')"
+grep -q "ci_gate_{{PROJECT}}.py" .claude/settings.local.json && echo "hook 등록 OK"
+```
+
+셋 다 OK 여야 작동. 한 줄이라도 빠지면 `/eval_agent_harness` 로 점검.
+
+### Q. BRAIN 내용을 코드에 맞춰 동기화하려면?
+
+`/sync_brain` 이 STATE.md 갱신과 같은 흐름에서 처리한다 - 별도 절차 아님. `last 갱신` 이후 diff 를 신호 표(핵심 클래스/엔드포인트, 신규 영구화 키, 의존성, 권한, 진입점, 비타협 항목)와 자동 대조 → 신호가 있으면 섹션별 diff 를 제시하고 컨펌 대기 → 승인 시 그 자리에서 BRAIN.md 반영. 신규 키 추가처럼 마이그레이션이 필요 없는 변경은 이 경로로 충분하다.
+
+### Q. BRAIN 의 기존 키 이름/타입을 변경하려면? (마이그레이션 필요)
+
+`/sync_brain` 범위 밖 - 사용자 데이터 마이그레이션이 필요한 구조 변경이라 별도 절차:
+1. `/plan_agent_{{PROJECT}}` 로 새 키 + 마이그레이션 절차 plan.md 작성
+2. `/dev_{{PROJECT}}` 로 코드 + BRAIN.md 동시 갱신
+3. `/eval_agent_{{PROJECT}}` 로 회귀 확인 + 기존 사용자 데이터 보존 검증
+4. `/sync_brain` 으로 STATE.md §6 갱신
+
+이 경우의 BRAIN 단독 갱신은 위험 - plan 단계에서 명시된 task 만 BRAIN 수정.
+
+### Q. 서브에이전트가 자기 작업을 계속 PASS 선언해요
+
+- frontmatter 의 tools 에서 Edit 빠져 있는지 확인
+- Write 가 있다면 path 제약이 본문에 명시되어 있는지 확인
+- eval 에이전트는 Write 없음 + permissionMode: plan (result 는 텍스트 반환)
+- frontmatter 에 permissionMode: plan 존재 확인
+
+### Q. 새 슬래시 커맨드 추가 절차
+
+1. `/plan_agent_harness` 진입 (변경 범위: `.claude/commands/<new>.md` 추가)
+2. `/dev_harness` 로 파일 생성 (frontmatter `description:` 필수)
+3. `/eval_agent_harness` 로 정합성 확인
+
+---
+
+## 10. 외부 의존
+
+{{EXTERNAL_DEPS_DETAIL}}
+
+---
+
+## 11. 환경 가정
+
+| 항목 | 가정 |
+|---|---|
+| OS | {{OS_ASSUMPTION}} |
+| 셸 | {{SHELL_ASSUMPTION}} |
+| 외부 도구 | {{TOOL_ASSUMPTION}} |
+
+<!--
+플레이스홀더:
+- {{PROJECT}} / {{PROJECT_UPPER}} / {{PROJECT_TITLE}}
+- {{RELEASE_SLASH_ROWS}} / {{RELEASE_AGENT_ROWS}}: 배포 워크플로 있으면 행 추가
+- {{CI_GATE_LANG_ROW}}: 언어별 sanity 검사
+- {{IMMUTABLES_BRIEF}}: 1~2줄 비타협 요약
+- {{EXTERNAL_DEPS_DETAIL}}: 외부 의존 상세
+- {{OS_ASSUMPTION}}: "Mac / Linux / Windows git-bash 호환" 등
+- {{SHELL_ASSUMPTION}}: "bash / zsh" 등
+- {{TOOL_ASSUMPTION}}: 필요한 외부 도구. adb / npm / docker 등
+-->

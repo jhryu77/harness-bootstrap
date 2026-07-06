@@ -1,0 +1,55 @@
+---
+description: {{PROJECT}} 코드 구현 가이드 - plan 산출물에 따라 메인 세션이 직접 Edit/Write
+---
+
+# /dev_{{PROJECT}}
+
+`plan_{{PROJECT}}` 가 작성한 `task_<TS>/plan.md` + `tasklist.md` 에 따라 코드를 구현한다. 메인 세션이 직접 Edit/Write 한다 (서브에이전트 호출 X).
+
+매 Edit/Write 마다 PostToolUse hook 이 `python .agent/scripts/ci_gate_{{PROJECT}}.py` 를 자동 실행한다. stderr 로 경고가 나오면 즉시 수정.
+
+---
+
+## A. 시스템 진입점 / 인터페이스 비타협
+
+{{IMMUTABLES_ENTRY_TABLE}}
+
+## B. 영역별 비타협 (분할 / Picker / 인증 등)
+
+{{IMMUTABLES_AREA_TABLE}}
+
+## C. 영구화 / 키 인벤토리 일관성
+
+{{IMMUTABLES_PREFS_TABLE}}
+
+---
+
+## @MX 태그
+
+위험/중요 지점에만 부여: `@MX:ANCHOR` (참조 fan-in 3 이상 핵심 지점) / `@MX:WARN <REASON>` (REASON 필수) / `@MX:TASK task_<TS>_<slug>` (근거 task 역추적).
+상세 규율은 `03_workflow_patterns.md` §@MX 태그 규율 참조 - **태그 없음이 정상**, 남발 금지.
+
+## CI Gate 자동 발동 항목 (Edit/Write 시 stderr)
+
+- 임시 파일 prefix(tmp_/verify_/diag_/check_) 루트 직접 생성 → FAIL
+- 시크릿 패턴 (JWT/AWS/Google/GitHub/PEM) → WARN
+- {{LANG_CHECK_DESCRIPTION}} → WARN
+
+`tmp/` 폴더 내부는 통과.
+
+## 수동 셀프체크 (구현 후)
+
+- [ ] tasklist.md 모든 TC 수동 ☑
+- [ ] 비타협 상수 변경 없음
+- [ ] 진입점 (intent-filter / 라우트) 보존
+- [ ] 영구화 키 보존
+
+구현 완료 후 `/eval_agent_{{PROJECT}}` 로 평가.
+
+<!--
+플레이스홀더:
+- {{IMMUTABLES_ENTRY_TABLE}}: 진입점 비타협 표 (CLAUDE.md §6 일부 발췌)
+- {{IMMUTABLES_AREA_TABLE}}: 영역별 비타협 표 (분할/Picker 등 - 해당 시)
+- {{IMMUTABLES_PREFS_TABLE}}: 영구화 키 비타협 표
+- {{LANG_CHECK_DESCRIPTION}}: 언어별 sanity 검사 설명
+-->

@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(echo \"exit_code: $?\")",
+      "Bash(mkdir -p tmp)",
+      "Bash(mkdir -p .agent/tasks)",
+      "Bash(mkdir -p .agent/tasks/archive)",
+      "Bash(find .agent/tasks -maxdepth 1 -type d -name \"task_*\" -mmin +120)",
+      "Bash(find .agent/tasks -maxdepth 1 -type d -name \"task_harness_*\" -mmin +120)",
+      "Read(<YOUR_PROJECT_ROOT>/**)",
+      "<BUILD_TOOL_ALLOW_BLOCK>",
+      "<TEST_RUN_ALLOW_BLOCK>",
+      "<DEVICE_DEBUG_ALLOW_BLOCK>",
+      "<MCP_ALLOW_BLOCK>"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .agent/scripts/ci_gate_{{PROJECT}}.py"
+          }
+        ]
+      }
+    ]
+  }
+}

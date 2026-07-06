@@ -1,0 +1,31 @@
+---
+description: 하네스 (.claude/ + .agent/ + CLAUDE.md) 변경 계획 - plan_harness 서브에이전트 호출
+---
+
+# /plan_agent_harness
+
+`plan_harness` 서브에이전트를 사용하여 하네스 자체 변경 계획을 수립한다.
+
+## 사용 시점
+
+다음 중 하나에 해당하면 일반 `/plan_agent_{{PROJECT}}` 대신 이 슬래시 사용:
+
+- 새 슬래시 커맨드 추가 / 기존 삭제
+- 서브에이전트 권한 변경
+- CI Gate 검사 항목 추가
+- CLAUDE.md / HARNESS_GUIDE.md 갱신
+- BRAIN.md 의 키 인벤토리 마이그레이션 (코드 변경 동반 시 plan_agent_{{PROJECT}} 와 함께)
+- settings.local.json 권한 화이트리스트 변경
+
+## 산출물
+
+- `.agent/tasks/task_harness_<TS>_<slug>/plan.md`
+- `.agent/tasks/task_harness_<TS>_<slug>/tasklist.md`
+
+## 권한
+
+서브에이전트 Write 권한은 `.agent/tasks/task_harness_*/` 하위만. 코드 / `.claude/` 본체 / `.agent/context/` / `CLAUDE.md` 일체 수정 금지 (plan 단계에선 변경 X).
+
+## 다음
+
+`/dev_harness` 로 메인 세션이 plan 에 따라 하네스 파일 편집.

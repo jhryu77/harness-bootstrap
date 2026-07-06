@@ -1,0 +1,50 @@
+---
+description: 하네스 변경 결과 평가 - eval_harness 서브에이전트로 무결성 점검
+---
+
+# /eval_agent_harness
+
+`eval_harness` 서브에이전트를 사용하여 하네스 변경 결과의 무결성을 평가한다.
+
+## 절차
+
+메인 세션이 `subagent_type=eval_harness` 로 Agent 호출. 서브에이전트는:
+
+1. 가장 최근 `task_harness_<TS>_<slug>/` 폴더의 `plan.md` + `tasklist.md` 읽기 - plan.md 의 수용 기준 (Binary AC) 표 포함
+2. 점검 항목 실행:
+   - 디렉토리 / 파일 무결성 (`.claude/`, `.agent/`, CLAUDE.md 필수 파일)
+   - frontmatter 정합성 - commands 의 `description`, agents 의 `name/description/model/tools`, **eval 계열의 `permissionMode: plan` 포함**
+   - CI Gate 스크립트 구문 (`python -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py`)
+   - `settings.local.json` JSON 파싱
+   - hook 일치성 (settings 의 hook command ↔ 실제 스크립트 존재)
+   - archive 동작 (`.agent/tasks/archive/` 존재 + task 폴더 카운트)
+3. result YAML 을 **최종 텍스트 응답으로 반환**
+4. 메인 세션: 반환된 YAML 을 `.agent/tasks/task_harness_<TS>_<slug>/harness.result` 로 저장
+
+> **판정 하드룰**: PASS 에는 모든 check 의 `evidence`(명령 exit code / 출력 인용 또는 `파일:라인` 인용) 필수. 증거 없으면 FAIL, 의심되면 FAIL.
+
+## 산출물 - result (텍스트 반환)
+
+서브에이전트가 result YAML 을 최종 텍스트 응답에 그대로 포함 → 메인 세션이 `.agent/tasks/task_harness_<TS>_<slug>/harness.result` 로 저장.
+
+YAML 골격은 **에이전트 본문(`.claude/agents/eval_harness.md`)의 "산출물 - harness.result" 절이 SSOT** 다 - `status` / `task` / `checked_at` / `ac_pass: "N/M"` / `checks[].name·result·evidence` / `notes`. 여기 중복 기재하지 않는다 (드리프트 방지).
+
+## 권한
+
+서브에이전트는 Write 권한 없음 + `permissionMode: plan` 이중 봉쇄 - Bash 리다이렉션/heredoc 경유 쓰기까지 차단.
+result 는 텍스트 반환, 기록은 메인 세션. 하네스 / 소스 / Edit 일체 금지.
+
+## PASS 후 (메인 세션)
+
+1. 반환된 result YAML 을 `.agent/tasks/task_harness_<TS>_<slug>/harness.result` 로 저장
+2. `plan.md` frontmatter 의 `status: active` → `done` 으로 변경 (archive_tasks.py 의 아카이브 판정 기준)
+3. `/sync_brain` → `/commit_push`
+
+## FAIL 시
+
+result 의 follow_up 에 원인 분석 + 재진입 단계 명시. 메인 세션은 `/dev_harness` 보강 또는 `/plan_agent_harness` 재진입.
+
+<!--
+플레이스홀더:
+- {{PROJECT}}: 프로젝트 slug (예: sampleapp) - ci_gate 스크립트명에 사용
+-->

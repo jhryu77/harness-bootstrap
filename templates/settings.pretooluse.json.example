@@ -1,0 +1,37 @@
+{
+  "_comment": "opt-in 훅 예시 (PreToolUse pre_gate + Stop stop_gate) - settings.local.json 의 hooks 키에 필요한 블록만 병합해 사용. 둘 다 기본 미등록 선택 자산: pre_gate 는 파괴적 Bash 차단(A12) + 커밋 게이트(A11), stop_gate 는 턴 종료 시 변경 파일 광역 검사(advisory 전용, A16). 해당 스크립트를 templates/scripts/ 에서 .agent/scripts/ 로 복사할 것. Stop 은 matcher 없이 hooks 배열만 둔다. JSON 은 주석 불가라 이 안내를 _comment 키로 제공.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .agent/scripts/ci_gate_{{PROJECT}}.py"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .agent/scripts/pre_gate.py"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .agent/scripts/stop_gate.py"
+          }
+        ]
+      }
+    ]
+  }
+}

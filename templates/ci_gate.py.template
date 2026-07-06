@@ -1,0 +1,240 @@
+#!/usr/bin/env python3
+"""
+ci_gate_{{PROJECT}}.py
+Claude Code PostToolUse(Edit|Write) hook.
+정상 시 무출력. 위반 시 stderr 로 Claude 컨텍스트에 주입.
+
+검사 항목:
+  [1] 파일 위치       - 임시 파일(tmp_*/verify_*/diag_*/check_*) 루트 직접 생성 금지 (tmp/ 폴더만 허용)
+  [2] 시크릿 하드코딩 - JWT/AWS/Google API·OAuth/GitHub PAT·OAuth/GitLab PAT/Slack/OpenAI 류/
+                        PEM Private Key(접두 변형 포함)/인증서 블록
+                        + .agent/config/security_patterns.json 의 프로젝트별 추가 패턴 (추가만 허용)
+  [3] {{LANG_SPECIFIC_CHECK_DESCRIPTION}}
+  [4] FROZEN 존 경고    - 하네스 자산(.claude/commands·agents, .agent/context·scripts,
+                        HARNESS_GUIDE.md, settings.local.json, CLAUDE.md) 변경 감지 시
+                        WARN (FAIL 아님 - /dev_harness 승인 플로우 밖이면 중단 안내)
+
+진입점:
+  - 인자 직접 호출:  python ci_gate_{{PROJECT}}.py <path>
+  - PostToolUse hook: stdin JSON (file_path / path / toolInput.file_path 모두 지원)
+"""
+
+import sys
+import os
+import re
+import json
+import pathlib
+
+# 프로젝트 루트 - __file__ 기준 동적 감지 (Mac/Windows 양쪽 동작).
+# 위치: <root>/.agent/scripts/ → parents[2] 가 프로젝트 루트.
+PROJECT_ROOT = str(pathlib.Path(__file__).resolve().parents[2])
+
+# === 검사 1: 임시 파일 prefix 패턴 ===
+TMP_PATTERNS = ("tmp_", "verify_", "diag_", "check_")
+
+# === 검사 2: 시크릿 정규식 (배포 킷 기본 세트) ===
+DEFAULT_SECRET_PATTERNS = [
+    (re.compile(r"eyJ[A-Za-z0-9._-]{40,}"), "JWT"),
+    (re.compile(r"AKIA[0-9A-Z]{16}"), "AWS Access Key"),
+    (re.compile(r"AIza[0-9A-Za-z_-]{35}"), "Google API Key"),
+    (re.compile(r"ghp_[A-Za-z0-9]{36}"), "GitHub PAT"),
+    (re.compile(r"github_pat_[A-Za-z0-9_]{82}"), "GitHub fine-grained PAT"),
+    (re.compile(r"gho_[A-Za-z0-9]{36}"), "GitHub OAuth Token"),
+    (re.compile(r"glpat-[A-Za-z0-9_-]{20}"), "GitLab PAT"),
+    (re.compile(r"xox[baprs]-[A-Za-z0-9-]{10,}"), "Slack Token"),
+    (re.compile(r"ya29\.[A-Za-z0-9_-]{20,}"), "Google OAuth Access Token"),
+    # 짧은 prefix - 오탐 시 security_patterns.json 대신 코드에서 조정
+    (re.compile(r"sk-[A-Za-z0-9_-]{20,}"), "OpenAI/Anthropic 류 API Key (sk-)"),
+    (re.compile(r"-----BEGIN (RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY-----"), "PEM Private Key"),
+    (re.compile(r"-----BEGIN CERTIFICATE-----"), "인증서 블록"),
+]
+
+
+def _load_extra_patterns():
+    """프로젝트별 추가 시크릿 패턴 (.agent/config/security_patterns.json).
+    기본 패턴 제거는 불가 - 추가만 허용 (배포 킷 안전 기본값)."""
+    extra_path = os.path.join(PROJECT_ROOT, ".agent", "config", "security_patterns.json")
+    patterns = []
+    try:
+        with open(extra_path, encoding="utf-8") as f:
+            for item in json.load(f):
+                patterns.append((re.compile(item["pattern"]), item.get("label", "custom")))
+    except Exception:
+        pass
+    return patterns
+
+
+SECRET_PATTERNS = DEFAULT_SECRET_PATTERNS + _load_extra_patterns()
+
+
+def _rel_to_root(path: str) -> str:
+    """프로젝트 루트 기준 상대 경로. 루트 외부면 절대 경로 반환."""
+    try:
+        return os.path.relpath(os.path.abspath(path), os.path.abspath(PROJECT_ROOT))
+    except ValueError:
+        return path
+
+
+# === 검사 4: FROZEN 존 (하네스 자산) prefix ===
+# 디렉터리는 '/' 로 끝나면 prefix 매칭, 아니면 파일 정확 일치.
+FROZEN_ZONE_PREFIXES = (
+    ".claude/commands/",
+    ".claude/agents/",
+    ".claude/settings.local.json",
+    ".agent/context/",
+    ".agent/HARNESS_GUIDE.md",
+    ".agent/scripts/",
+    "CLAUDE.md",
+)
+
+
+def check_frozen_zone(path: str):
+    """검사 4: FROZEN 존(하네스 자산) 변경 감지 - WARN 전용 (FAIL 아님).
+    내용 로드 전 경로 기반으로 실행. 위반 hits 에 합류시키지 않고 독립 stderr 출력."""
+    rel = _rel_to_root(path).replace("\\", "/")
+    for prefix in FROZEN_ZONE_PREFIXES:
+        matched = rel.startswith(prefix) if prefix.endswith("/") else rel == prefix
+        if matched:
+            # 주의: 메시지에 em dash(U+2014)/en dash(U+2013) 등 cp949 비인코딩 문자 금지 (Windows 파이프 크래시)
+            return (f"[FROZEN ZONE] 하네스 자산 변경 감지: {rel} - /dev_harness 승인 플로우가 "
+                    f"아니라면 중단하고 /plan_agent_harness 로 진입할 것 "
+                    f"(승인된 dev_harness 작업 중이면 이 경고는 무시)")
+    return None
+
+
+def check_tmp_location(path: str):
+    """검사 1: 임시 파일 prefix 가 루트 직접 배치되어 있는지."""
+    base = os.path.basename(path)
+    rel = _rel_to_root(path)
+    is_root_level = ("\\" not in rel) and ("/" not in rel)
+    if any(base.startswith(p) for p in TMP_PATTERNS) and is_root_level:
+        return f"임시 파일 prefix({base.split('_', 1)[0]}_*)는 tmp/ 폴더에 생성하세요. 루트 직접 배치 금지."
+    return None
+
+
+def check_secrets(path: str, content: str):
+    """검사 2: 하드코딩 시크릿 감지. 검출 시 종류 명시."""
+    for pat, label in SECRET_PATTERNS:
+        if pat.search(content):
+            return f"하드코딩 시크릿 감지({label}) - 환경변수/secrets 사용. 절대 커밋 금지."
+    return None
+
+
+# === 검사 3: 언어별 sanity ===
+# 아래 함수는 프로젝트 언어에 맞게 교체.
+
+def check_kotlin_braces(path: str, content: str):
+    """Kotlin 중괄호 매칭 경량 카운트."""
+    if not path.endswith((".kt", ".kts")):
+        return None
+    opens = content.count("{")
+    closes = content.count("}")
+    if opens != closes:
+        return f"Kotlin 괄호 불일치: '{{' {opens} 개 / '}}' {closes} 개"
+    return None
+
+
+def check_python_syntax(path: str, content: str):
+    """Python AST 파싱."""
+    if not path.endswith(".py"):
+        return None
+    try:
+        import ast
+        ast.parse(content)
+    except SyntaxError as e:
+        return f"Python SyntaxError: {e.lineno}:{e.offset} {e.msg}"
+    return None
+
+
+def check_typescript_basic(path: str, content: str):
+    """TypeScript/JavaScript 경량 괄호 검사."""
+    if not path.endswith((".ts", ".tsx", ".js", ".jsx")):
+        return None
+    opens = content.count("{")
+    closes = content.count("}")
+    if abs(opens - closes) > 0:
+        return f"TS/JS 괄호 불일치: '{{' {opens} 개 / '}}' {closes} 개"
+    return None
+
+
+# {{ADDITIONAL_CHECKS_PLACEHOLDER}}
+# 프로젝트별 추가 검사 함수를 여기에 정의:
+# - 매직 넘버 / 비타협 상수 변경 감지
+# - 인텐트 필터 / 라우트 누락
+# - .env.example 시크릿 의심값 등
+
+
+def gate(path: str) -> None:
+    if not path or not os.path.isfile(path):
+        return
+
+    rel = _rel_to_root(path)
+
+    # 검사 4: FROZEN 존 경고 - 내용 로드 전 경로 기반. WARN 전용이므로
+    # 임시파일 검사(FAIL 조기 return)보다 먼저 독립 출력 (hits 미합류).
+    frozen_msg = check_frozen_zone(path)
+    if frozen_msg:
+        print(f"\n{frozen_msg}\n", file=sys.stderr)
+
+    # 검사 1: 파일 내용 읽기 전 위치 체크
+    loc_msg = check_tmp_location(path)
+    if loc_msg:
+        print(f"\n[CI Gate FAIL] 파일 위치: {rel}\n  {loc_msg}\n", file=sys.stderr)
+        return
+
+    # 파일 내용 로드
+    try:
+        with open(path, encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+    except Exception:
+        return
+
+    # 검사 2, 3
+    hits = []
+    checks = [
+        ("secrets", check_secrets),
+        ("kotlin_braces", check_kotlin_braces),
+        # ("python_syntax", check_python_syntax),
+        # ("typescript_basic", check_typescript_basic),
+    ]
+    for name, fn in checks:
+        msg = fn(path, content)
+        if msg:
+            hits.append((name, msg))
+
+    if hits:
+        print(f"\n[CI Gate WARN] {rel}", file=sys.stderr)
+        for name, msg in hits:
+            print(f"  - {name}: {msg}", file=sys.stderr)
+        print("", file=sys.stderr)
+
+
+def _resolve_path_from_stdin() -> str:
+    """PostToolUse hook 의 stdin JSON 에서 file_path 추출."""
+    try:
+        data = json.loads(sys.stdin.read())
+    except Exception:
+        return ""
+    return (
+        data.get("file_path")
+        or data.get("path")
+        or (data.get("toolInput") or {}).get("file_path")
+        or (data.get("tool_input") or {}).get("file_path")
+        or ""
+    )
+
+
+def main():
+    # 직접 호출: python ci_gate_{{PROJECT}}.py <path>
+    if len(sys.argv) > 1:
+        gate(sys.argv[1])
+        return
+    # hook 진입: stdin JSON 파싱
+    if not sys.stdin.isatty():
+        fp = _resolve_path_from_stdin()
+        if fp:
+            gate(fp)
+
+
+if __name__ == "__main__":
+    main()

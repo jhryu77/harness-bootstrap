@@ -1,0 +1,95 @@
+---
+description: {{PROJECT_UPPER}}_STATE.md 갱신 + BRAIN.md 갱신 필요 여부 판별 → 컨펌 후 반영
+---
+
+# /sync_brain
+
+`{{PROJECT_UPPER}}_STATE.md` 의 시점 정보를 현재 코드 / git / task 폴더 상태와 동기화하고, `{{PROJECT_UPPER}}_BRAIN.md` 갱신이 필요한지 판별해 **사용자 컨펌 후 같은 흐름 안에서** 반영한다. BRAIN 갱신을 별도 절차로 미루지 않는다 - 판별과 반영을 한 커맨드 안에서 끝낸다.
+
+> 하네스 메커니즘 자체(새 커맨드/서브에이전트/hook/비타협 항목의 구조 변경)를 바꾸는 경우, 또는 BRAIN 변경이 실제 코드 마이그레이션(영구화 키 이름/타입 변경 등)을 동반하는 경우는 이 커맨드 범위 밖 - `/plan_agent_harness` 또는 `/plan_agent_<project>` 로 진입.
+
+## 절차
+
+### 1. 상태 수집 (Bash)
+
+```bash
+echo "=== git 상태 ==="
+git status --short
+git log --oneline -10
+
+echo "=== 최근 task ==="
+ls -dt .agent/tasks/task_* 2>/dev/null | head -5
+
+echo "=== 빌드 구성 시점값 ==="
+{{BUILD_VERSION_GREP}}
+```
+
+### 2. STATE.md 섹션별 갱신
+
+| 섹션 | 갱신 내용 |
+|---|---|
+| §1 현재 Phase 상태 | 새로 완료한 Phase 의 ⬜→✅ + 근거 한 줄 |
+| §2 git 저장소 | HEAD SHA + 최근 commit 5개 |
+| §3 빌드 구성 | versionCode / versionName / 시점값 |
+| §4 구현 화면 | 새로 추가/완성된 화면 행 |
+| §6 최근 task 요약 | 활성 task 5개 (TS / slug / 결과 / **ac_pass** / **커밋 SHA** / 비고) |
+| frontmatter `model_policy` | `model_policy.py set` 실행 이력이 있으면 최신 tier 값(inherit/high/medium/low)으로 갱신 |
+
+> task 종료(PASS 확정) 시 **커밋 SHA 와 ac_pass(N/M) 기록은 필수** - eval 근거가 휘발되지 않는 최소 단위. result 파일 자체는 커밋하지 않으므로(스테이징 제외 규칙) STATE §6 의 이 두 값이 영구 증거다.
+
+### 3. BRAIN.md 갱신 필요 판별
+
+`{{PROJECT_UPPER}}_BRAIN.md` 상단 `마지막 갱신` 시점 이후의 git diff 를 아래 신호 표와 대조한다:
+
+| 신호 | 갱신 대상 섹션 |
+|---|---|
+| 새 핵심 클래스 / 라우트 / 엔드포인트 추가 | §3 핵심 클래스/엔드포인트 책임 |
+| 새 영구화 키 추가 (신규 키, 기존 키 이름/타입은 그대로) | §4 영구화 키 인벤토리 |
+| 의존성 메이저 버전업 | §5 빌드/의존성 |
+| 시스템 권한 / 외부 인터페이스 변경 | §6 시스템 권한 |
+| 진입점(intent-filter/라우트) 변경 | §7 시스템 진입점 - 비타협 위반 소지, diff 를 특히 신중히 제시 |
+| 새 비타협 항목 발견 | §9 영역별 비타협 항목 |
+| 외부 SDK / sibling repo 의존 변경 | §10 참조/외부 의존 |
+
+- **신호 없음** → BRAIN 갱신 생략, 4번(헤더 갱신)으로.
+- **신호 있음** → 아래 절차로 (자동 반영 금지, 반드시 컨펌).
+- **범위 밖** (여기서 처리하지 않음): 기존 영구화 키의 이름/타입 변경·삭제 - 사용자 데이터 마이그레이션이 필요하므로 `/plan_agent_<project>` 로 별도 task.
+
+### BRAIN 갱신 제안 + 컨펌 (자동 반영 금지)
+
+1. 신호별로 **해당 섹션 현재 내용 vs 제안 변경**을 diff 형태로 제시
+2. 영향 범위 요약 (갱신 섹션 수, 핵심 변경 1~2줄)
+3. 사용자의 명시적 승인 대기 ("갱신"/"진행"/"확인")
+4. 승인 시에만 `{{PROJECT_UPPER}}_BRAIN.md` 해당 섹션 Edit + 상단 "마지막 갱신" 날짜 갱신
+5. 미승인/보류 시 STATE.md 에 "BRAIN 갱신 대기 - 사유" 메모만 남기고, 다음 `/sync_brain` 때 같은 diff 구간부터 재판별
+
+### 4. 헤더 갱신
+
+```
+> **마지막 갱신**: YYYY-MM-DD HH:mm KST (간단 요약 1줄)
+```
+
+STATE.md §7 메타에 마지막 sync_brain 시각 = 현재 시각으로 함께 갱신.
+
+## 출력
+
+메인 세션이 사용자에게:
+
+```
+## sync_brain 완료
+
+### Phase 갱신
+- Phase X: ⬜ → ✅ (근거: ...)
+
+### 최근 task (5개)
+- task_<TS>_<slug>: PASS/FAIL (1줄 요약)
+
+### BRAIN
+- 갱신 없음 | 갱신 제안 N건 (컨펌 대기) | 갱신 완료 N건
+
+### 하네스 진화 상태
+- 마지막 task_harness_* 시점 1줄 (read 와 동일 규칙: 90일 이전이면 "⚠️ 진화 부채: 마지막 하네스 진화가 N일 전입니다. /plan_agent_harness 점검 권장")
+
+### 다음 권장
+- /commit_push
+```

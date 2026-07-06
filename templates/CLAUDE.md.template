@@ -1,0 +1,147 @@
+# {{PROJECT_TITLE}} - Claude Code 프로젝트 가이드
+
+{{ONE_LINE_DESCRIPTION}}
+
+> 본 가이드는 Claude Code 세션이 자동 로드한다. 모든 plan / dev / eval 은 Claude Code 내부에서 완결된다.
+> 운영 매뉴얼 본체: [`.agent/HARNESS_GUIDE.md`](./.agent/HARNESS_GUIDE.md)
+> 컨텍스트 SSOT: [`.agent/context/{{PROJECT_UPPER}}_BRAIN.md`](./.agent/context/{{PROJECT_UPPER}}_BRAIN.md) · [`.agent/context/{{PROJECT_UPPER}}_STATE.md`](./.agent/context/{{PROJECT_UPPER}}_STATE.md)
+> 통신 언어: **{{LANGUAGE}}**
+
+---
+
+## 1. 프로젝트 개요
+
+| 항목 | 값 |
+|---|---|
+| 분류 | {{CATEGORY}} |
+| 패키지 / 네임스페이스 | {{PACKAGE}} |
+| 모듈 구성 | {{MODULES}} |
+| 기술 스택 | {{STACK}} |
+| 빌드 도구 | {{BUILD_TOOL}} |
+| 주요 버전 | {{KEY_VERSIONS}} |
+
+현재 Phase 진행은 `{{PROJECT_UPPER}}_STATE.md §1` 참조.
+
+---
+
+## 2. 하네스 워크플로
+
+```
+일반 코드 변경:
+/read_{{PROJECT}}  →  /plan_agent_{{PROJECT}}  →  /dev_{{PROJECT}}  →  /eval_agent_{{PROJECT}}  →  PASS  →  /sync_brain  →  /commit_push
+
+{{RELEASE_WORKFLOW_BLOCK}}
+```
+
+| 슬래시 | 역할 | 진입 |
+|---|---|---|
+| `/read_{{PROJECT}}` | BRAIN/STATE 로드 + 코드 인덱스 + 다음 액션 제안 | 메인 |
+| `/plan_agent_{{PROJECT}}` | 계획 수립 (서브에이전트) | plan_{{PROJECT}} |
+| `/dev_{{PROJECT}}` | 코드 구현 가이드 | 메인 (Edit/Write 직접) |
+| `/eval_agent_{{PROJECT}}` | 평가 (서브에이전트) | eval_{{PROJECT}} |
+| `/plan_agent_harness` | 하네스 자체 변경 계획 | plan_harness |
+| `/dev_harness` | 하네스 파일 편집 | 메인 |
+| `/eval_agent_harness` | 하네스 무결성 평가 | eval_harness |
+{{RELEASE_SLASH_ROWS}}
+| `/sync_brain` | {{PROJECT_UPPER}}_STATE.md 갱신 | 메인 |
+| `/test_{{PROJECT}}` | 수동 검증 체크리스트 | 메인 |
+| `/commit_push` | git commit + push | 메인 |
+
+`task_YYYYMMDD_HHMM/` 폴더는 `mtime 120분` 초과 시 `archive/` 로 자동 이동 (plan 진입 시).
+
+---
+
+## 3. CI Gate (자동 정적 검증)
+
+`.claude/settings.local.json` 의 PostToolUse hook 이 매 `Edit|Write` 시 `python .agent/scripts/ci_gate_{{PROJECT}}.py` 를 자동 호출. 정상 시 무출력. 위반 시 stderr 로 Claude 컨텍스트에 주입.
+
+| 검사 | 위반 시 |
+|---|---|
+| 임시 파일 위치 (`tmp_*`/`verify_*`/`diag_*`/`check_*` 루트 직접 생성) | **FAIL** - `tmp/` 폴더에 생성 권고 |
+| 시크릿 패턴 (JWT / AWS / Google API / GitHub·GitLab·Slack 토큰 / `sk-` 계열 API 키 / PEM Private Key·인증서) | **WARN** - 환경변수/secrets 사용 |
+{{CI_GATE_LANG_ROW}}
+
+---
+
+## 4. 빌드 / 실행
+
+```bash
+{{BUILD_COMMANDS}}
+```
+
+산출물: `{{BUILD_OUTPUT}}`
+
+---
+
+## 5. 아키텍처 / 기술 스택
+
+{{ARCHITECTURE_BRIEF}}
+
+자세한 구조는 `{{PROJECT_UPPER}}_BRAIN.md §2~§3` 참조.
+
+---
+
+## 6. 비타협 항목 (변경 시 사용자 컨펌 필수)
+
+> 표 규칙: 각 행에 ZONE 태그 - `Frozen`(변경 = /plan_agent_harness + 사용자 컨펌 필수) / `Evolvable`(/sync_brain 또는 일반 task 경로 갱신 허용). 태깅 가이드: 08_immutables.md
+
+{{IMMUTABLES_SECTION}}
+
+---
+
+## 7. 디렉토리 배치 규칙
+
+```
+{{DIRECTORY_TREE}}
+```
+
+- 코드 루트에 임시 / 실험 파일 직접 생성 금지 - `tmp/` 만 (CI Gate 가 차단)
+- 서브에이전트 산출물은 `.agent/tasks/task_*/` 하위만
+
+---
+
+## 8. 참조 문서
+
+- 운영 매뉴얼: `.agent/HARNESS_GUIDE.md`
+- 불변 SSOT: `.agent/context/{{PROJECT_UPPER}}_BRAIN.md`
+- 시점 SSOT: `.agent/context/{{PROJECT_UPPER}}_STATE.md`
+- 빌드: {{BUILD_FILES}}
+
+{{EXTERNAL_DEPS_LINE}}
+
+---
+
+## 9. 커밋 규칙
+
+- **`Co-Authored-By:` 라인 {{COAUTHORED_BY}}** - `/commit_push` 가 자동 처리
+- 자동 스테이징 금지: {{NO_AUTOSTAGE_PATTERNS}}
+- 커밋 메시지: `<type>: <한 줄 요약>` (`type` ∈ {{COMMIT_TYPE_LIST}})
+- 메시지는 **why** 중심 1~2줄. **what** 은 diff 가 보여준다
+- main / master 로의 force push 는 사용자 명시 요청 시에만
+
+<!--
+플레이스홀더 가이드:
+- {{PROJECT}}: 슬러그 (소문자, 짧음). 예: sampleapp, webapp, ios
+- {{PROJECT_UPPER}}: 대문자 슬러그. 예: SAMPLEAPP, WEBAPP
+- {{PROJECT_TITLE}}: 표시 이름. 예: "SampleApp Launcher"
+- {{LANGUAGE}}: "한국어" 또는 "English"
+- {{CATEGORY}}: 분류 한 줄. 예: "차량용 안드로이드 SampleApp 런처"
+- {{PACKAGE}}: 패키지/네임스페이스. 예: "com.sampleapp.launcher"
+- {{MODULES}}: 모듈 구성. 예: "단일 :app", "Next.js App Router 모노레포"
+- {{STACK}}: 기술 스택. 예: "Kotlin 2.0.21 / AGP 8.5.2", "Next.js 14 / TypeScript 5 / Supabase"
+- {{BUILD_TOOL}}: "Gradle", "npm/pnpm", "Cargo"
+- {{KEY_VERSIONS}}: 주요 버전 요약. 예: "Java 17 / compileSdk 35"
+- {{BUILD_COMMANDS}}: ./gradlew :app:assembleDebug 등 정형구
+- {{BUILD_OUTPUT}}: 산출물 경로
+- {{ARCHITECTURE_BRIEF}}: 5~10줄 짧은 아키텍처 요약
+- {{IMMUTABLES_SECTION}}: 비타협 표 (08_immutables.md 참조) (각 행에 ZONE 열 포함 - 08_immutables.md 태깅 가이드 참조)
+- {{DIRECTORY_TREE}}: 짧은 디렉토리 트리
+- {{BUILD_FILES}}: 예: "gradle/libs.versions.toml · app/build.gradle.kts" or "package.json · tsconfig.json"
+- {{EXTERNAL_DEPS_LINE}}: 외부 의존 1줄. 예: "외부 SSOT / sibling 프로젝트 없음 (자기 완결)."
+- {{COAUTHORED_BY}}: "금지" 또는 "허용"
+- {{NO_AUTOSTAGE_PATTERNS}}: 예: "*.keystore *.jks *.p12 .env .env.* local.properties .agent/tasks/*.result tmp/"
+- {{COMMIT_TYPE_LIST}}: 예: "추가|갱신|수정|리팩터|테스트|문서" 또는 "feat|fix|refactor|test|docs"
+- {{RELEASE_WORKFLOW_BLOCK}}: 배포 워크플로 있으면 코드블록, 없으면 빈 줄
+- {{RELEASE_SLASH_ROWS}}: 배포 슬래시 표 행. 없으면 빈 줄
+- {{CI_GATE_LANG_ROW}}: 언어별 검사 표 행. 예: "| Kotlin `{` `}` 매칭 (.kt/.kts) | **WARN** - 괄호 카운트 표시 |"
+-->

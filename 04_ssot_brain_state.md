@@ -36,7 +36,7 @@ STATE.md   = 매 task. /sync_brain 슬래시 1개로 일괄 갱신.
 | **4. SharedPreferences / DB 키 인벤토리** | 영구화 키 모음. 변경 시 사용자 데이터 손실 → 마이그레이션 의무 |
 | **5. 빌드 / 의존성** | Java / Kotlin / AGP / Gradle / compileSdk / minSdk / 의존성 목록 |
 | **6. 시스템 권한** | 시그너처 권한 / hidden API / fail-soft 의무 |
-| **7. 시스템 진입점 (intent-filter / 라우트 표) | MAIN+HOME+DEFAULT+LAUNCHER 또는 Next.js 라우트 표 |
+| **7. 시스템 진입점 (intent-filter / 라우트 표) | MAIN+LAUNCHER 또는 Next.js 라우트 표 |
 | **8. 빌드 커맨드** | `./gradlew :app:installDebug` / `npm run build` 등 정형구 |
 | **9. 분할 / Picker / 인증 등 영역별 비타협** | 매직 넘버 / 클램프 함수 / 자기 자신 필터 |
 | **10. 참조 / 외부 의존** | 외부 SDK / 다른 repo / 외부 API URL |

@@ -59,12 +59,12 @@ checks:
   - name: tasklist_completion
     result: PASS
     evidence: "12/12 체크박스 완료 (tasklist.md)"
-  - name: launcher_intent_filter
+  - name: app_intent_filter
     result: PASS
-    evidence: "AndroidManifest.xml:L23 intent-filter 4종 확인"
-  - name: split_ratio_consts
+    evidence: "AndroidManifest.xml:L23 MAIN+LAUNCHER 확인"
+  - name: page_size_consts
     result: PASS
-    evidence: "Constants.kt:L12 MIN/MAX/DEFAULT 불변"
+    evidence: "ItemRepository.kt:L12 PAGE_SIZE/MAX_PAGE_SIZE 불변"
   - name: prefs_keys
     result: PASS
     evidence: "grep 결과 인용"

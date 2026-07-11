@@ -1,6 +1,6 @@
 # sampleapp - Claude Code 프로젝트 가이드
 
-차량용 안드로이드 SampleApp 런처. **단일 모듈** (`:app`) Android 프로젝트. 좌/우 분할 + 패널 임베드.
+안드로이드 SampleApp - 로컬 우선 리스트-디테일 앱. **단일 모듈** (`:app`) Android 프로젝트. RecyclerView 리스트 + 상세/편집 + Room 저장 + 자가 업데이트(OTA).
 
 > 본 가이드는 Claude Code 세션이 자동 로드한다. 모든 plan / dev / eval 은 Claude Code 내부에서 완결되며 외부 IDE 핸드오버는 없다.
 > 운영 매뉴얼 본체: [`.agent/HARNESS_GUIDE.md`](./.agent/HARNESS_GUIDE.md)
@@ -13,15 +13,15 @@
 
 | 항목 | 값 |
 |---|---|
-| 패키지 | `com.sampleapp.launcher` |
-| applicationId | `com.sampleapp.launcher` |
+| 패키지 | `com.sampleapp.app` |
+| applicationId | `com.sampleapp.app` |
 | 모듈 | 단일 `:app` (KMP 없음, View 시스템) |
 | Java | 17 / Kotlin 2.0.21 / AGP 8.5.2 |
 | compileSdk | 35 / minSdk 26 / targetSdk 35 |
 | viewBinding | true |
-| 분류 | 차량용 런처 (CATEGORY_HOME, landscape 고정) |
+| 분류 | 일반 Android 앱 (MAIN+LAUNCHER 진입) |
 
-현재 Phase 진행 - `SAMPLEAPP_STATE.md` §1 참조. 1차 골격 (좌/우 분할 + 슬롯 바인딩 + 패널 임베드) 완료, 하네스 부트스트랩 진행 중.
+현재 Phase 진행 - `SAMPLEAPP_STATE.md` §1 참조. 1차 골격 (리스트-디테일 + Room 저장 + 설정) 완료, 하네스 부트스트랩 진행 중.
 
 ---
 
@@ -46,7 +46,7 @@ OTA 릴리스 (versionCode 증분 + Storage + ota_manifests):
 | `/eval_agent_harness` | 하네스 무결성 평가 | eval_harness |
 | `/plan_agent_ota_release` | OTA 릴리스 계획 (versionCode/release_notes/영향평가) | plan_ota_release |
 | `/dev_ota_release` | OTA 빌드 + 사인 + APK 메타 + MCP INSERT (is_active=false) | 메인 |
-| `/eval_agent_ota_release` | OTA 검증 (Storage 확인 + is_active 토글 + 단말 logcat + HOME 발화) | eval_ota_release |
+| `/eval_agent_ota_release` | OTA 검증 (Storage 확인 + is_active 토글 + 단말 logcat + 앱 실행) | eval_ota_release |
 | `/sync_brain` | SAMPLEAPP_STATE.md 갱신 | 메인 |
 | `/test_sampleapp` | 수동 검증 체크리스트 | 메인 |
 | `/commit_push` | git commit + push | 메인 |
@@ -89,64 +89,66 @@ OTA 릴리스 (versionCode 증분 + Storage + ota_manifests):
 
 ## 5. 아키텍처 / 기술 스택
 
-- **단일 모듈 Android 앱** (KMP / Compose Multiplatform 없음)
-- ConstraintLayout + **Guideline** 기반 좌/우 분할 - `splitGuideline.layout_constraintGuide_percent` 한 값으로 양쪽 동시 리사이즈
-- Fragment + ViewBinding (옵션 활성, `findViewById` 와 혼용)
-- SharedPreferences 영구화 (`split_ratio` + `pane_slots` 두 파일 분리)
-- VirtualDisplay 호스트 + reflection `injectInputEvent` (시그너처 권한 fail-soft 의무)
+- **단일 모듈 Android 앱** (KMP / Compose Multiplatform 없음, View 시스템)
+- RecyclerView + `ListAdapter`(DiffUtil) 리스트 - `ItemAdapter`
+- Fragment + ViewBinding 상세/편집 - `ItemListFragment` / `ItemDetailFragment` (`findViewById` 와 혼용)
+- Room DB + Repository 영구화 - `AppDatabase` / `ItemDao` / `ItemRepository`
+- SharedPreferences 설정 영구화 (`settings` + `sync_state` 두 파일 분리)
+- OkHttp 자가 업데이트 체크 + `FileProvider` install 인텐트 (INTERNET, 네트워크 실패 fail-soft 의무)
 
 자세한 클래스 책임 표는 `SAMPLEAPP_BRAIN.md` §3 참조.
 
 ---
 
-## 6. 런처 비타협 항목
+## 6. 앱 비타협 항목
 
 | # | 항목 | 비고 |
 |---|---|---|
-| 1 | `<intent-filter>` 의 `MAIN`+`HOME`+`DEFAULT`+`LAUNCHER` 4개 | 변경 = 사용자 컨펌 |
-| 2 | `screenOrientation="landscape"` | 회전 허용 = 사용자 컨펌 |
-| 3 | `configChanges` 8종 풀세트 (orientation\|screenSize\|screenLayout\|keyboardHidden\|navigation\|uiMode\|density\|smallestScreenSize) | Activity 재생성 방지 |
-| 4 | `launchMode="singleTask"` + `stateNotNeeded="true"` | 홈키 빠른 복귀 |
-| 5 | `resizeableActivity="false"` | 멀티윈도우 분리 방지 |
-| 6 | `AppPickerActivity.exported="false"` | 외부 임의 호출 차단 |
-| 7 | 시그너처 권한 4종 (`CAPTURE_VIDEO_OUTPUT` / `INTERNAL_SYSTEM_WINDOW` / `INJECT_EVENTS` / `MANAGE_ACTIVITY_TASKS`) | 추가/제거 = 사용자 컨펌. fail-soft try-catch 의무 |
-| 8 | 자기 자신 picker 제외 (`InstalledApps` 의 `selfPkg` 필터) | 재귀 임베드 방지 |
+| 1 | `<intent-filter>` 의 `MAIN`+`LAUNCHER` (앱 진입점) | 변경 = 사용자 컨펌 |
+| 2 | `packageName` / `applicationId` = `com.sampleapp.app` | 변경 = 사용자 컨펌 |
+| 3 | Room `@Database(version=N)` 증분 시 `Migration` 동반 | 누락 = 사용자 데이터 손실 |
+| 4 | Room entity 테이블/컬럼명 (`items`: `id`/`title`/`body`/`updated_at`) | 변경 = 마이그레이션 별도 task |
+| 5 | 릴리스 시그너처 config (keystore) | 추가/변경 = 사용자 컨펌 |
+| 6 | `INTERNET` 권한 (OTA 자가 업데이트) | 제거 시 업데이트 불가. 네트워크 호출 fail-soft try-catch 의무 |
+| 7 | `FileProvider` authority (`com.sampleapp.app.fileprovider`) | APK install 인텐트용. 변경 시 매니페스트+코드 동시 |
+| 8 | `DetailFragment.exported="false"` (딥링크 미노출) | 외부 임의 호출 차단 |
 
 ---
 
-## 7. 분할 / Prefs 비타협 항목
+## 7. 저장 / 상수 비타협 항목
 
 | # | 항목 | 비고 |
 |---|---|---|
-| 1 | `MIN_PERCENT 0.20` / `MAX_PERCENT 0.80` / `DEFAULT_PERCENT 0.70` 상수 | 동시 변경 금지. `MainActivity.companion` 만 SSOT |
-| 2 | 비율 적용 시 `coerceIn(MIN_PERCENT, MAX_PERCENT)` 호출 | 클램프 누락 = FAIL |
-| 3 | `layout_constraintGuide_percent` (0.0~1.0) | dp 절대값 사용 금지 |
-| 4 | SharedPreferences 파일 분리 (`split_ratio` ↔ `pane_slots`) | 혼재 금지 |
-| 5 | `PaneSlot` enum 순서 / `storageKey` 변경 금지 | 영구화 호환성 (마이그레이션 필요 시 별도 task) |
-| 6 | Picker 그리드 column = 6 | 차량 1280~1920px 가정. 변경 시 plan.md 근거 |
-| 7 | DividerHandle 24dp / DividerVisual 4dp 분리 | 터치 영역 vs 시각 영역 |
-| 8 | `VIRTUAL_DISPLAY_FLAG_TRUSTED = 1 shl 5 = 32` | 매직 넘버는 의미 주석 동반 |
+| 1 | `PAGE_SIZE 20` / `MAX_PAGE_SIZE 100` 페이지네이션 상수 | 동시 변경 금지. `ItemRepository.companion` 만 SSOT |
+| 2 | 페이지/개수 적용 시 `coerceIn(1, MAX_PAGE_SIZE)` 호출 | 클램프 누락 = FAIL |
+| 3 | `SYNC_INTERVAL_MIN 15` / `SYNC_INTERVAL_MAX 1440` (분) clamp | 동기화 간격. dp/절대 ms 혼용 금지 |
+| 4 | SharedPreferences 파일 분리 (`settings` ↔ `sync_state`) | 혼재 금지 |
+| 5 | `SortOrder` enum 순서 / `storageKey` 변경 금지 | 영구화 호환성 (마이그레이션 필요 시 별도 task) |
+| 6 | 리스트 그리드 column = 2 (sw600dp 는 3) | 리소스 qualifier 로만 분기. 변경 시 plan.md 근거 |
+| 7 | SwipeThreshold 96dp / RippleRadius 24dp 분리 | 제스처 영역 vs 시각 영역 |
+| 8 | `OTA_CHECK_TIMEOUT_MS = 10_000` | 매직 넘버는 의미 주석 동반 |
 
 ---
 
 ## 8. 디렉토리 배치 규칙
 
 ```
-app/src/main/java/com/sampleapp/launcher/
-├── data/                  AppEntry / InstalledApps / PaneSlot / PaneSlotPrefs
+app/src/main/java/com/sampleapp/app/
+├── data/                  Item / ItemDao / AppDatabase / ItemRepository
 ├── ui/
-│   ├── SplitRatioPrefs.kt (top of ui/)
-│   ├── pane/              PaneFragment / PaneAppHost
-│   └── picker/            AppPickerActivity / AppListAdapter
-└── MainActivity.kt        (top of launcher/)
+│   ├── SettingsPrefs.kt (top of ui/)
+│   ├── list/              ItemListFragment / ItemAdapter
+│   └── detail/            ItemDetailFragment
+├── update/                OtaChecker / OtaInstaller
+└── MainActivity.kt        (top of app/)
 
 app/src/main/res/
-├── layout/                activity_main / activity_app_picker / fragment_pane / view_pane_empty / item_app_grid
-├── drawable/              bg_divider_handle / ic_close / ic_launcher_*
+├── layout/                activity_main / fragment_item_list / fragment_item_detail / item_row
+├── drawable/              ic_add / ic_delete / ic_launcher_*
 └── values/                colors / strings / themes
 ```
 
-- `app/src/main` 루트에 `.kt` 직접 생성 금지 - 반드시 `java/com/sampleapp/launcher/` 하위
+- `app/src/main` 루트에 `.kt` 직접 생성 금지 - 반드시 `java/com/sampleapp/app/` 하위
 - 임시 / 실험 파일은 `tmp/` 만 (CI Gate 가 루트 직접 생성 차단)
 - 서브에이전트 산출물은 `.agent/tasks/task_*/` 하위만
 

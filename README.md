@@ -82,7 +82,7 @@ harness_bootstrap/
 │       └── eval_harness.md.template
 │
 └── examples/
-    ├── sampleapp_snapshot/                  Android 런처 하네스 풀 구성 예시
+    ├── sampleapp_snapshot/                  Android 앱 하네스 풀 구성 예시
     │   ├── CLAUDE.md
     │   ├── HARNESS_GUIDE.md
     │   ├── settings.local.json          절대 경로 → 플레이스홀더 치환됨
@@ -91,7 +91,7 @@ harness_bootstrap/
     │   └── agents/                      6개 서브에이전트 예시
     ├── sampleapp_server_inventory/
     │   └── INVENTORY.md                 raw Next.js 프로젝트의 인벤토리 실례 (적용 전 상태)
-    └── case_study.md                    sampleapp_launcher 종단 시나리오 + sampleapp_server 적용 가이드
+    └── case_study.md                    sampleapp_app 종단 시나리오 + sampleapp_server 적용 가이드
 ```
 
 ---
@@ -203,7 +203,7 @@ Copy-Item <onboarding>/templates/ci_gate.py.template ".agent/scripts/ci_gate_$PR
 
 ## 적용 예시 (examples/)
 
-**sampleapp_launcher** (Android 차량용 런처)
+**sampleapp_app** (Android 앱)
 - OTA 배포 / 크래시 보고 / 라이선스 / 진단 수집까지 포함한 풀 스택 하네스 구성
 - examples/sampleapp_snapshot/ 에 전체 자산 수록
 

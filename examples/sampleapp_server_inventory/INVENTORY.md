@@ -1,7 +1,7 @@
 # sampleapp_server - Raw 프로젝트 인벤토리
 
 > 이 폴더는 **하네스가 적용되지 않은 raw Next.js 프로젝트** 의 인벤토리 실례.
-> sampleapp_launcher (Android, 하네스 풀 적용) 와 대비되는 second example.
+> sampleapp_app (Android, 하네스 풀 적용) 와 대비되는 second example.
 > BOOTSTRAP_PROMPT.md 의 단계 1 (프로젝트 분석) 이 산출해야 할 결과의 **목표 형태**.
 
 ---
@@ -151,7 +151,7 @@ sampleapp_server/
 
 ## 6. sibling repo 인터페이스
 
-sampleapp_launcher (Android client) 와의 공유 DB tables:
+sampleapp_app (Android client) 와의 공유 DB tables:
 - `licenses` - 라이선스 발급/조회
 - `devices` - 단말 등록 1:N
 - `ota_manifests` - APK URL + SHA-256
@@ -258,6 +258,6 @@ sampleapp_server 는 **이미 완성도 높은 Next.js 프로젝트** 지만 하
 - 비타협 항목 (RLS / RBAC) 무심코 변경 위험
 - task 작업 흔적 휘발 - "왜 이렇게 했더라" 회귀
 
-`harness_bootstrap/BOOTSTRAP_PROMPT.md` 의 7단계 적용으로 30~60분 만에 sampleapp_launcher 와 동등한 안전망을 갖춘다.
+`harness_bootstrap/BOOTSTRAP_PROMPT.md` 의 7단계 적용으로 30~60분 만에 sampleapp_app 와 동등한 안전망을 갖춘다.
 
 핵심 포인트: **같은 하네스 골격이 스택 차이를 흡수**. Kotlin/Gradle (launcher) 와 TypeScript/Next.js (server) 모두 동일 SSOT 분리 + 3단계 워크플로 + CI Gate hook + 권한 격리 패턴 적용.

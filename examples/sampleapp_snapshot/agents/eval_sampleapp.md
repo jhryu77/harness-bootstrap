@@ -1,6 +1,6 @@
 ---
 name: eval_sampleapp
-description: sampleapp 구현 완료 후 평가. TaskList 완료율 / Kotlin 컴파일 / 런처 인텐트 필터 / 분할 비율 상수 / Prefs 키 일관성 검증 + PASS/FAIL 선언. 소스·하네스 파일 수정 금지. sampleapp.result 만 Bash heredoc 으로 작성 허용.
+description: sampleapp 구현 완료 후 평가. TaskList 완료율 / Kotlin 컴파일 / 앱 진입 인텐트 / 페이지네이션 상수 / Room·Prefs 키 일관성 검증 + PASS/FAIL 선언. 소스·하네스 파일 수정 금지. sampleapp.result 만 Bash heredoc 으로 작성 허용.
 model: sonnet
 tools:
   - Read
@@ -37,38 +37,36 @@ git diff --name-only HEAD 2>/dev/null \
 ./gradlew :app:compileDebugKotlin --quiet 2>&1 | tail -30 || echo "[Gradle skipped]"
 ```
 
-### 3. 런처 인텐트 필터 무결성
+### 3. 앱 진입 인텐트 필터 무결성
 
 ```bash
 MANIFEST="app/src/main/AndroidManifest.xml"
-HOME=$(grep -c "android.intent.category.HOME" "$MANIFEST")
-DEFAULT=$(grep -c "android.intent.category.DEFAULT" "$MANIFEST")
+MAIN=$(grep -c "android.intent.action.MAIN" "$MANIFEST")
 LAUNCHER=$(grep -c "android.intent.category.LAUNCHER" "$MANIFEST")
-LANDSCAPE=$(grep -c 'screenOrientation="landscape"' "$MANIFEST")
-CONFIG=$(grep -c 'configChanges=.*orientation.*screenSize' "$MANIFEST")
-echo "HOME=$HOME DEFAULT=$DEFAULT LAUNCHER=$LAUNCHER LANDSCAPE=$LANDSCAPE CONFIG=$CONFIG"
-# 모두 1 이상이어야 PASS
+echo "MAIN=$MAIN LAUNCHER=$LAUNCHER"
+# 둘 다 1 이상이어야 PASS
 ```
 
-### 4. 분할 비율 상수 일관성
+### 4. 페이지네이션 상수 일관성
 
 ```bash
-MAIN="app/src/main/java/com/sampleapp/launcher/MainActivity.kt"
-grep -nE "MIN_PERCENT|MAX_PERCENT|DEFAULT_PERCENT" "$MAIN"
-# 3개 상수 모두 정의되어야 PASS
-grep -nE "coerceIn\(\s*MIN_PERCENT\s*,\s*MAX_PERCENT\s*\)" "$MAIN"
+REPO="app/src/main/java/com/sampleapp/app/data/ItemRepository.kt"
+grep -nE "PAGE_SIZE|MAX_PAGE_SIZE" "$REPO"
+# 두 상수 모두 정의되어야 PASS
+grep -nE "coerceIn\(\s*1\s*,\s*MAX_PAGE_SIZE\s*\)" "$REPO"
 # 클램프 호출 1건 이상이어야 PASS
 ```
 
-### 5. Prefs 키 일관성
+### 5. Room / Prefs 키 일관성
 
 ```bash
-PREFS_DIR="app/src/main/java/com/sampleapp/launcher"
-grep -rnE 'FILE_NAME\s*=\s*"pane_slots"' "$PREFS_DIR"
-grep -rnE 'FILE_NAME\s*=\s*"split_ratio"' "$PREFS_DIR"
-grep -rnE 'KEY_LEFT_PERCENT\s*=\s*"left_percent"' "$PREFS_DIR"
-grep -nE 'LEFT\("left"\)|RIGHT\("right"\)' "$PREFS_DIR/data/PaneSlot.kt"
-# 모든 grep 매칭 0건 이상이어야 PASS
+SRC="app/src/main/java/com/sampleapp/app"
+grep -rnE '@Entity\(tableName\s*=\s*"items"\)' "$SRC"
+grep -rnE '@Database\(.*version\s*=' "$SRC"
+grep -rnE 'FILE_NAME\s*=\s*"settings"' "$SRC"
+grep -rnE 'FILE_NAME\s*=\s*"sync_state"' "$SRC"
+grep -nE 'TITLE\("title"\)|UPDATED\("updated"\)' "$SRC/ui/SettingsPrefs.kt"
+# 모든 grep 매칭 0건 이상이어야 PASS. @Database version 증분 시 Migration 동반 확인
 ```
 
 ### 6. 변경 범위 이탈 검사
@@ -83,7 +81,7 @@ git diff --name-only HEAD
 | 결과 | 조건 |
 |---|---|
 | **PASS** | 1~6 모두 통과 + tasklist.md 의 모든 TC 체크 |
-| **FAIL:RE_DEV** | CI Gate 경고, 인텐트 필터 누락, 분할 상수 / Prefs 키 불일치, Kotlin 컴파일 실패 |
+| **FAIL:RE_DEV** | CI Gate 경고, 인텐트 필터 누락, 페이지네이션 상수 / Room·Prefs 키 불일치, Kotlin 컴파일 실패 |
 | **FAIL:RE_PLAN** | 범위 이탈 (plan.md 에 없는 파일 변경) |
 | **FAIL:BLOCKER** | python / Gradle 환경 문제, 외부 의존 |
 
@@ -99,9 +97,9 @@ DATE: 2026-05-04 12:34 KST
 
 [1] TaskList 완료율: 6/6
 [2] CI Gate: 경고 0건
-[3] 런처 인텐트 필터: HOME=1 DEFAULT=1 LAUNCHER=1 LANDSCAPE=1 CONFIG=1
-[4] 분할 비율 상수: MIN/MAX/DEFAULT 모두 정의, coerceIn 클램프 호출 1건
-[5] Prefs 키: pane_slots / split_ratio / left_percent / LEFT("left") / RIGHT("right") 모두 보존
+[3] 앱 진입 인텐트: MAIN=1 LAUNCHER=1
+[4] 페이지네이션 상수: PAGE_SIZE/MAX_PAGE_SIZE 정의, coerceIn 클램프 호출 1건
+[5] Room/Prefs 키: items 엔티티 / @Database version / settings / sync_state / SortOrder 모두 보존
 [6] 범위 이탈: 없음
 
 다음 액션: /sync_brain 또는 /commit_push (사용자 응답 후)
@@ -123,8 +121,8 @@ REPORT_EOF
 ```
 
 권장 옵션 판정:
-- AndroidManifest 또는 MainActivity / PaneAppHost / PaneFragment 변경 → **A 권장** (실 기기 검증 필요)
-- data/ Prefs 변경만 → **B 또는 C**
+- AndroidManifest 또는 MainActivity / AppDatabase / ItemDao / ItemRepository 변경 → **A 권장** (실 기기 검증 필요)
+- ui/ Prefs 변경만 → **B 또는 C**
 - 하네스/문서/메타만 → **C**
 
 ## 금지 사항

@@ -150,4 +150,4 @@ sha256:      <SHA>
 - platform 사인은 `app/build.gradle.kts` 의 `signingConfigs.platform` 이 `keys/platform.keystore` 존재 시 자동 적용 (Phase O5 설정). 별도 apksigner 불필요.
 - R8 keep 규칙은 `app/proguard-rules.pro` 에 OtaChecker / OtaDownloader / OtaInstaller / SupabaseHttpClient 모두 keep 되어 있음 (Phase O5).
 - ota_manifests 컬럼 정의: `version_code` (UNIQUE int) / `version_name` (text) / `apk_url` (text) / `sha256` (text 64자) / `size_bytes` (bigint) / `release_notes` (text) / `force_update` (bool default false) / `min_device_sdk` (int default 26) / `require_platform_sign` (bool default true) / `is_active` (bool).
-- Phase O5b 에서 발견: 단말 1회 `adb shell appops set com.sampleapp.launcher REQUEST_INSTALL_PACKAGES allow` 필요할 수 있음. 단말 셋업 체크리스트 (`/test_sampleapp`) 참조.
+- Phase O5b 에서 발견: 단말 1회 `adb shell appops set com.sampleapp.app REQUEST_INSTALL_PACKAGES allow` 필요할 수 있음. 단말 셋업 체크리스트 (`/test_sampleapp`) 참조.

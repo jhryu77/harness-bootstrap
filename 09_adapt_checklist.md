@@ -35,7 +35,7 @@ mkdir -p .agent/context .agent/scripts .agent/tasks/archive
 
 `templates/CLAUDE.md.template` 복사 후 플레이스홀더 치환:
 - `{{PROJECT}}` → `sampleapp`
-- `{{PROJECT_TITLE}}` → `SampleApp Launcher`
+- `{{PROJECT_TITLE}}` → `SampleApp`
 - `{{STACK}}` → `Android / Kotlin / Gradle`
 - `{{LANGUAGE}}` → `한국어`
 - `{{COAUTHORED_BY}}` → `금지`

@@ -49,7 +49,7 @@ model: inherit  # high/medium/low 로 명시적 지정 가능 - 05_subagent_desi
 | 컴파일 / 타입체크 | `{{COMPILE_COMMAND}}` |
 | (해당 시) 단위 테스트 | `{{TEST_COMMAND}}` |
 | 진입점 보존 | `grep -E "<진입점 패턴>" <매니페스트>` |
-| 비타협 상수 보존 | `grep -E "{{MIN_PERCENT_PATTERN}}" <상수 파일>` |
+| 비타협 상수 보존 | `grep -E "{{IMMUTABLE_CONST_PATTERN}}" <상수 파일>` |
 | 영구화 키 보존 | `grep -E "<키 패턴>" <prefs 파일>` |
 | (해당 시) CI Gate sanity | `python3 -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py` |
 | (배포 task 시) 외부 검증 | adb logcat / curl / MCP execute_sql |
@@ -122,5 +122,5 @@ AC: N/M PASS
 - {{LANG_COMPILE_CHECK}}: 예: "Kotlin 컴파일", "TypeScript 타입체크", "Python AST"
 - {{COMPILE_COMMAND}}: 예: "./gradlew :app:compileDebugKotlin", "npx tsc --noEmit"
 - {{TEST_COMMAND}}: 예: "./gradlew test", "pnpm test"
-- {{MIN_PERCENT_PATTERN}}: 비타협 상수 grep 패턴 예시
+- {{IMMUTABLE_CONST_PATTERN}}: 비타협 상수 grep 패턴 예시
 -->

@@ -129,28 +129,28 @@ def check_python_syntax(path, content):
 
 ### 매직 넘버 / 비타협 상수 변경 감지
 
-예: sampleapp 의 `MIN_PERCENT 0.20 / MAX_PERCENT 0.80 / DEFAULT_PERCENT 0.70` 가 변경되면 경고:
+예: sampleapp 의 `PAGE_SIZE 20 / MAX_PAGE_SIZE 100` 이 변경되면 경고:
 
 ```python
-def check_split_ratio_consts(path, content):
-    if "MainActivity.kt" not in path: return None
-    expected = ["MIN_PERCENT = 0.20", "MAX_PERCENT = 0.80", "DEFAULT_PERCENT = 0.70"]
+def check_page_size_consts(path, content):
+    if "ItemRepository.kt" not in path: return None
+    expected = ["PAGE_SIZE = 20", "MAX_PAGE_SIZE = 100"]
     for e in expected:
         if e not in content:
-            return f"분할 비율 상수 변경 감지: '{e}' 없음. plan.md 영향 평가 필요."
+            return f"페이지네이션 상수 변경 감지: '{e}' 없음. plan.md 영향 평가 필요."
     return None
 ```
 
 ### 인텐트 필터 / 라우트 누락 감지
 
 ```python
-def check_launcher_intent_filter(path, content):
+def check_app_intent_filter(path, content):
     if "AndroidManifest.xml" not in path: return None
-    required = ["MAIN", "HOME", "DEFAULT", "LAUNCHER"]
+    required = ["MAIN", "LAUNCHER"]
     missing = [c for c in required if f"android.intent.category.{c}" not in content
                and f'action.{c}' not in content]
     if missing:
-        return f"런처 인텐트 필터 누락: {missing}"
+        return f"앱 진입 인텐트 필터 누락: {missing}"
     return None
 ```
 

@@ -277,9 +277,9 @@ checks:
   - name: tasklist_completion
     result: PASS
     evidence: "12/12 체크박스 (tasklist.md)"
-  - name: split_ratio_consts
+  - name: page_size_consts
     result: PASS
-    evidence: "Constants.kt:L12 MIN/MAX/DEFAULT 불변"
+    evidence: "ItemRepository.kt:L12 PAGE_SIZE/MAX_PAGE_SIZE 불변"
 notes:
   - "..."
 ```

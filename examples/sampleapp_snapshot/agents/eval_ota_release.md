@@ -61,10 +61,10 @@ SELECT version_code, is_active FROM ota_manifests ORDER BY version_code;
 
 ```bash
 adb logcat -c
-adb shell am force-stop com.sampleapp.launcher
+adb shell am force-stop com.sampleapp.app
 sleep 1
-adb shell am start -n com.sampleapp.launcher/.MainActivity
-echo "런처 재시작 완료 - 8초 대기"
+adb shell am start -n com.sampleapp.app/.MainActivity
+echo "앱 재시작 완료 - 8초 대기"
 sleep 8
 ```
 
@@ -100,17 +100,17 @@ PASS:6라인 시 메인 세션에 다음 메시지를 그대로 반환하고 사
 
 ```
 단말 화면에 시스템 설치 다이얼로그가 떠 있어:
-  "SampleApp Launcher / 이 앱을 업데이트하시겠습니까? / [취소] [업데이트]"
+  "SampleApp / 이 앱을 업데이트하시겠습니까? / [취소] [업데이트]"
 
-단말에서 직접 "업데이트" 버튼을 탭해줘. (자동 input tap 은
-launcher dispatchTouchEvent forward 충돌로 차단됨 - Phase O5b 에서 검증)
+단말에서 직접 "업데이트" 버튼을 탭해줘. (시스템 설치 다이얼로그는
+별개 시스템 윈도우라 자동 input tap 이 안정적이지 않음 - Phase O5b 에서 검증)
 
-탭 완료하면 알려주면 즉시 HOME 발화 / versionCode / 화면 검증 자동 진행.
+탭 완료하면 알려주면 즉시 재진입 / versionCode / 화면 검증 자동 진행.
 ```
 
 사용자 응답 없이 다음 단계 진행 금지.
 
-### 8. HOME 발화 라인 + versionCode 검증 (E9~E10)
+### 8. 재진입 라인 + versionCode 검증 (E9~E10)
 
 사용자 탭 완료 응답 후:
 
@@ -120,16 +120,16 @@ LOG2=$(adb logcat -d -s SampleAppApplication:V OtaInstaller:V)
 echo "$LOG2"
 
 # Phase O5e 패치 검증 핵심 라인
-echo "$LOG2" | grep -q "OTA 설치 직후 첫 부팅 - HOME 인텐트 발화" && OK_HOME=1 || OK_HOME=0
+echo "$LOG2" | grep -q "OTA 설치 직후 첫 실행 - 정상 화면 진입" && OK_RELAUNCH=1 || OK_RELAUNCH=0
 
 # 단말 versionCode
-DEVICE_VC=$(adb shell dumpsys package com.sampleapp.launcher | grep -oE "versionCode=[0-9]+" | head -1 | cut -d= -f2)
+DEVICE_VC=$(adb shell dumpsys package com.sampleapp.app | grep -oE "versionCode=[0-9]+" | head -1 | cut -d= -f2)
 [ "$DEVICE_VC" = "<NEXT_VC>" ] && OK_VC=1 || OK_VC=0
 
-echo "OK_HOME=$OK_HOME OK_VC=$OK_VC"
+echo "OK_RELAUNCH=$OK_RELAUNCH OK_VC=$OK_VC"
 ```
 
-OK_HOME=0 → FAIL:HOME_MISSING (Phase O5e 패치 미적용 또는 회귀)
+OK_RELAUNCH=0 → FAIL:RELAUNCH_MISSING (Phase O5e 패치 미적용 또는 회귀)
 OK_VC=0 → FAIL:INSTALL_NOT_COMPLETED (사용자가 "취소" 탭했거나 설치 실패)
 
 ### 9. 화면 캡처 (E11)
@@ -143,13 +143,13 @@ MSYS_NO_PATHCONV=1 adb pull /sdcard/ota_eval.png "$SHOT"
 echo "screenshot=$SHOT"
 ```
 
-분할 모드 복구 시각 검증은 사용자 응답으로. eval 은 파일 존재만 확인.
+리스트 화면 복구 시각 검증은 사용자 응답으로. eval 은 파일 존재만 확인.
 
 ### 10. 판정
 
 | 결과 | 조건 |
 |---|---|
-| **PASS** | 1~9 모두 통과 (OK1..6=1, OK_HOME=1, OK_VC=1, screenshot 파일 존재) |
+| **PASS** | 1~9 모두 통과 (OK1..6=1, OK_RELAUNCH=1, OK_VC=1, screenshot 파일 존재) |
 | **FAIL:UPLOAD_MISSING** | E3 storage.objects 0건 |
 | **FAIL:SIZE_MISMATCH** | E3 size 불일치 |
 | **FAIL:SHA256** | logcat SHA-256 mismatch |
@@ -157,7 +157,7 @@ echo "screenshot=$SHOT"
 | **FAIL:MANIFEST** | logcat manifest 응답 비정상 |
 | **FAIL:PARTIAL** | 6 라인 일부만 매칭 |
 | **FAIL:TIMEOUT** | 5분 내 라인 미출현 |
-| **FAIL:HOME_MISSING** | HOME 발화 라인 부재 (Phase O5e 회귀) |
+| **FAIL:RELAUNCH_MISSING** | 재진입 라인 부재 (Phase O5e 회귀) |
 | **FAIL:INSTALL_NOT_COMPLETED** | dumpsys versionCode 변경 없음 |
 
 FAIL 시 ota_manifests 자동 복귀:
@@ -181,7 +181,7 @@ DATE: <YYYY-MM-DD HH:MM KST>
 [5] 단말 트리거: force-stop + restart 완료
 [6] logcat 6라인: OK1..6=111111
 [7] 사용자 "업데이트" 탭: 완료 응답 수신
-[8] HOME 발화: OK_HOME=1 / dumpsys versionCode: <n> (OK_VC=1)
+[8] 재진입: OK_RELAUNCH=1 / dumpsys versionCode: <n> (OK_VC=1)
 [9] 화면 캡처: <TASK_DIR>/screen_v<n>.png
 
 다음 액션:
@@ -195,7 +195,7 @@ REPORT_EOF
 ### 12. PASS 후 사용자 질문 (메인 세션에 그대로 반환)
 
 ```
-OTA 릴리스 PASS - versionCode <n> 단말 설치 + 자동 분할 복구 검증 완료.
+OTA 릴리스 PASS - versionCode <n> 단말 설치 + 재진입/화면 복구 검증 완료.
 
 다음 결정:
 - A) ota_manifests version_code=<n> is_active=true 유지 (운영 노출)

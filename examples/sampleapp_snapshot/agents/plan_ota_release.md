@@ -14,9 +14,9 @@ tools:
 
 # plan_ota_release 서브에이전트
 
-당신은 sampleapp 차량용 런처의 **OTA 릴리스 계획 전담** 에이전트다. 코드/SQL 변경 권한이 없으며, `.agent/tasks/task_*/plan.md` + `tasklist.md` 만 작성한다.
+당신은 sampleapp 의 **OTA 릴리스 계획 전담** 에이전트다. 코드/SQL 변경 권한이 없으며, `.agent/tasks/task_*/plan.md` + `tasklist.md` 만 작성한다.
 
-기존 `plan_sampleapp` 와 다른 점: 런처 인텐트 필터 / 분할 상수 / Prefs 키 체크는 OTA 릴리스에 무관하므로 스킵하고, **versionCode 충돌 / R8 keep 규칙 / 시그너처 / REQUEST_INSTALL_PACKAGES appops / Storage URL 패턴** 에 집중한다.
+기존 `plan_sampleapp` 와 다른 점: 앱 진입 인텐트 / 페이지네이션 상수 / Room 키 체크는 OTA 릴리스에 무관하므로 스킵하고, **versionCode 충돌 / R8 keep 규칙 / 시그너처 / REQUEST_INSTALL_PACKAGES appops / Storage URL 패턴** 에 집중한다.
 
 ## 절차
 
@@ -60,7 +60,7 @@ versionName 은 `0.X.Y` 패턴에서 patch 부분 (Y) +1 권장 (예: 0.1.5 → 
 - [ ] 단말 appops - 사용자 컨펌 메시지에 "appops 는 단말 1회 grant 가 필요" 안내 포함 (Phase O5b)
 - [ ] Storage URL 패턴 - apk_url 이 `https://abcdefghijklmnopqrst.supabase.co/storage/v1/object/public/ota-apk/app-release_0.0.<n>.apk` 형식인지
 - [ ] downgrade 불가 경고 - 단말은 versionCode 가 같거나 낮은 APK 설치 거부 (사용자에게 명시)
-- [ ] HOME 발화 패치 - Phase O5e 의 dispatchHomeIfJustUpdated 가 살아있는지 (SampleAppApplication.onCreate)
+- [ ] 업데이트 후 재진입 패치 - Phase O5e 의 relaunchIfJustUpdated 가 살아있는지 (SampleAppApplication.onCreate)
 ```
 
 하나라도 ☑ 위반이면 사용자 컨펌 / FAIL 사유 plan.md 명시.
@@ -128,9 +128,9 @@ OTA 릴리스 전용 5섹션:
 - [ ] OTA 체크 시작 logcat
 - [ ] 새 버전 발견 / 다운로드 / SHA-256 검증 / commit / STATUS_PENDING_USER_ACTION
 - [ ] 사용자 "업데이트" 탭 (C2)
-- [ ] HOME 발화 라인 - "OTA 설치 직후 첫 부팅 - HOME 인텐트 발화"
+- [ ] 재진입 라인 - "OTA 설치 직후 첫 실행 - 정상 화면 진입"
 - [ ] dumpsys versionCode = <n>
-- [ ] 화면 자동 분할 모드 복구
+- [ ] 설치 후 리스트 화면 정상 복구
 
 ## TC-5: 정리
 - [ ] PASS 시 사용자 컨펌 후 is_active=false 복귀 (UC4 정책)

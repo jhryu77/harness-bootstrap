@@ -1,15 +1,15 @@
 # Case Study - sampleapp 두 repo 의 하네스 적용 시나리오
 
-> 동일 사용자가 운영하는 **2 repo** 의 비교 - sampleapp_launcher (Android, 하네스 풀 적용) + sampleapp_server (Next.js admin, 하네스 미적용 raw).
+> 동일 사용자가 운영하는 **2 repo** 의 비교 - sampleapp_app (Android, 하네스 풀 적용) + sampleapp_server (Next.js admin, 하네스 미적용 raw).
 > 이 문서는 onboarding kit 을 어떤 식으로 두 종류 상황에 적용하는지의 종단 사례.
 
 ---
 
-## 1. sampleapp_launcher - 하네스 풀 적용 상태
+## 1. sampleapp_app - 하네스 풀 적용 상태
 
 ### 1.1 컨텍스트
 
-- 분류: 차량용 Android SampleApp 런처
+- 분류: Android SampleApp 런처
 - 스택: Kotlin / Gradle / ConstraintLayout
 - 모듈: 단일 `:app` + companion APK
 - 상태: Phase O10 (크래시 보고 + 진단 수집) 완료, OTA 풀 사이클 검증 통과
@@ -17,7 +17,7 @@
 ### 1.2 적용된 하네스 자산
 
 ```
-sampleapp_launcher/
+sampleapp_app/
 ├── CLAUDE.md                          172줄 - 자동 로드 압축본
 ├── .claude/
 │   ├── settings.local.json            83줄 - PostToolUse hook + 권한 화이트리스트
@@ -36,25 +36,25 @@ sampleapp_launcher/
 
 ### 1.3 비타협 항목 (CLAUDE.md §6~§7)
 
-런처 비타협 8개:
-1. `<intent-filter>` 의 MAIN+HOME+DEFAULT+LAUNCHER
-2. `screenOrientation="landscape"`
-3. `configChanges` 8종 풀세트
-4. `launchMode="singleTask"` + `stateNotNeeded="true"`
-5. `resizeableActivity="false"`
-6. `AppPickerActivity.exported="false"`
-7. 시그너처 권한 4종 (CAPTURE_VIDEO_OUTPUT / INTERNAL_SYSTEM_WINDOW / INJECT_EVENTS / MANAGE_ACTIVITY_TASKS)
-8. 자기 자신 picker 제외 (`InstalledApps.selfPkg` 필터)
+앱 비타협 8개:
+1. `<intent-filter>` 의 MAIN+LAUNCHER
+2. `packageName` / `applicationId` = com.sampleapp.app
+3. Room `@Database(version)` 증분 시 Migration 동반
+4. Room entity 테이블/컬럼명 (`items`)
+5. 릴리스 시그너처 config
+6. `INTERNET` 권한 (OTA)
+7. `FileProvider` authority
+8. `DetailFragment.exported="false"`
 
-분할/Prefs 비타협 8개:
-1. `MIN_PERCENT 0.20 / MAX_PERCENT 0.80 / DEFAULT_PERCENT 0.70` 상수
-2. 비율 적용 시 `coerceIn(...)`
-3. `layout_constraintGuide_percent` (0.0~1.0)
-4. SharedPreferences 파일 분리 (`split_ratio` ↔ `pane_slots`)
-5. `PaneSlot` enum 순서 / `storageKey` 변경 금지
-6. Picker 그리드 column = 6
-7. DividerHandle 24dp / DividerVisual 4dp 분리
-8. `VIRTUAL_DISPLAY_FLAG_TRUSTED = 1 shl 5 = 32`
+저장/상수 비타협 8개:
+1. `PAGE_SIZE 20 / MAX_PAGE_SIZE 100` 상수
+2. 페이지 적용 시 `coerceIn(1, MAX_PAGE_SIZE)`
+3. `SYNC_INTERVAL_MIN 15 / MAX 1440` (분) clamp
+4. SharedPreferences 파일 분리 (`settings` ↔ `sync_state`)
+5. `SortOrder` enum 순서 / `storageKey` 변경 금지
+6. 리스트 그리드 column = 2
+7. SwipeThreshold 96dp / RippleRadius 24dp 분리
+8. `OTA_CHECK_TIMEOUT_MS = 10_000`
 
 ### 1.4 종단 시나리오 - Phase Z (단말 진단 수집) 작업
 
@@ -227,18 +227,18 @@ ls app/
 
 ### 2.3 결과
 
-sampleapp_server 가 raw 상태에서 **약 30~60분** 만에 sampleapp_launcher 와 동등한 하네스를 갖게 된다.
+sampleapp_server 가 raw 상태에서 **약 30~60분** 만에 sampleapp_app 와 동등한 하네스를 갖게 된다.
 
 이때 client / server 간 인터페이스는 **각 BRAIN.md §10 외부 의존** 에 명시:
 
 ```
-[sampleapp_launcher BRAIN §10]
+[sampleapp_app BRAIN §10]
 - sampleapp_server (sibling repo): Supabase 인증/라이선스 발급 처리 - admin webapp
 - 인터페이스: Supabase REST/Edge Function URL
 - Edge Function: license-check, license-issue, ota-manifest, crash-report, diagnostics-report
 
 [sampleapp_server BRAIN §10]
-- sampleapp_launcher (sibling repo): Android client, Supabase 인증 토큰 발급/소진
+- sampleapp_app (sibling repo): Android client, Supabase 인증 토큰 발급/소진
 - 인터페이스: Supabase RLS 정책 + RBAC role 정의 (admin_users.role)
 - 공유 DB tables: licenses / devices / ota_manifests / crash_reports
 ```
@@ -249,7 +249,7 @@ sampleapp_server 가 raw 상태에서 **약 30~60분** 만에 sampleapp_launcher
 
 ## 3. 두 사례에서 본 onboarding kit 효과
 
-| 항목 | sampleapp_launcher | sampleapp_server (적용 후 가정) |
+| 항목 | sampleapp_app | sampleapp_server (적용 후 가정) |
 |---|---|---|
 | 하네스 적용 비용 | 이미 적용 (30+ task 누적) | 약 30~60분 (BOOTSTRAP_PROMPT 활용) |
 | Phase 추적 가능성 | 30+ 행 표로 즉시 보임 | 즉시 부트스트랩 가능 |
@@ -266,7 +266,7 @@ sampleapp_server 가 raw 상태에서 **약 30~60분** 만에 sampleapp_launcher
 
 같은 사용자가 client + server 양쪽 작업할 때:
 
-1. client 변경: `sampleapp_launcher/` cwd 진입 → `/plan_agent_sampleapp` 등
+1. client 변경: `sampleapp_app/` cwd 진입 → `/plan_agent_sampleapp` 등
 2. server 변경: `sampleapp_server/` cwd 진입 → `/plan_agent_webapp` 등
 3. cross-repo (예: API schema 변경) - **두 repo 각각 plan task 진입** → BRAIN.md §10 외부 의존 인터페이스 갱신 → 양쪽 dev → 각자 eval → 양쪽 commit_push
 

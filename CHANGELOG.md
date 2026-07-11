@@ -207,15 +207,15 @@
   - CLAUDE.md / HARNESS_GUIDE.md / settings.local.json (절대경로 → `<YOUR_PROJECT_ROOT>` 치환) / ci_gate_sampleapp.py
   - commands/ 13개 / agents/ 6개 (sampleapp 예시 파일)
 - `sampleapp_server_inventory/INVENTORY.md` - Next.js admin webapp (raw 상태) 의 인벤토리 실례
-- `case_study.md` - sampleapp_launcher (적용 상태) + sampleapp_server (적용 시 예상) 비교 시나리오
+- `case_study.md` - sampleapp_app (적용 상태) + sampleapp_server (적용 시 예상) 비교 시나리오
 
 ### 예시 프로젝트
 
-- `sampleapp_launcher` (Android 차량용 런처) + `sampleapp_server` (Next.js sibling) - cross-repo 패턴 예시 포함
+- `sampleapp_app` (Android 앱) + `sampleapp_server` (Next.js sibling) - cross-repo 패턴 예시 포함
 
 ### 적용 가능 스택 예시
 
-- Kotlin / Gradle / Android (sampleapp_launcher 원본)
+- Kotlin / Gradle / Android (sampleapp_app 원본)
 - TypeScript / Next.js / Supabase (sampleapp_server, BOOTSTRAP_PROMPT 적용 예정)
 - Python / Node / Rust 등 다른 스택도 동일 패턴 가능 (CI Gate 의 언어별 검사만 교체)
 

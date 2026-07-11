@@ -1,5 +1,5 @@
 ---
-description: sampleapp 수동 테스트 체크리스트 (Build / 런처 진입 / 분할 / 슬롯 / fail-soft)
+description: sampleapp 수동 테스트 체크리스트 (Build / 앱 진입 / 리스트 / 저장 / fail-soft)
 ---
 
 # /test_sampleapp
@@ -12,37 +12,37 @@ description: sampleapp 수동 테스트 체크리스트 (Build / 런처 진입 /
 - [ ] `./gradlew :app:installDebug` 정상 (USB 기기 또는 에뮬레이터 연결)
 - [ ] adb logcat 에 RuntimeException / FATAL EXCEPTION 0건
 
-## 2. 런처 진입
+## 2. 앱 진입
 
-- [ ] 홈 키 → sampleapp 가 후보 런처에 노출
-- [ ] 기본 런처로 선택 시 부팅/홈키 모두 sampleapp 진입
-- [ ] landscape 강제 - 기기 회전해도 가로 유지
-- [ ] 회전·해상도 변동 시 Activity 재생성 안 됨 (호스팅 앱 끊김 없음)
+- [ ] 런처에서 sampleapp 아이콘 실행 → 리스트 화면 진입
+- [ ] MAIN+LAUNCHER intent-filter 로 정상 실행
+- [ ] 회전·해상도 변동 시 입력/스크롤 상태 보존 (`onSaveInstanceState`/ViewModel)
 
-## 3. 좌/우 분할 동작
+## 3. 리스트 / 페이지네이션
 
-- [ ] 초기 진입 시 70:30 표시
-- [ ] DividerHandle 드래그 → 좌측이 20%~80% 범위에서 부드럽게 변함
-- [ ] 20% / 80% 끝값에서 클램프 동작
-- [ ] ACTION_UP 후 앱 재시작 시 마지막 비율 복원
+- [ ] 초기 진입 시 20개 로드
+- [ ] 스크롤 끝 도달 → 다음 페이지 Room 쿼리 + DiffUtil 부분 갱신
+- [ ] 설정에서 페이지 크기 변경 시 1~100 범위 클램프
+- [ ] SortOrder 변경 → 리스트 재정렬 반영
 
-## 4. 슬롯 - 앱 바인딩
+## 4. 저장 - Room / Prefs
 
-- [ ] 빈 슬롯 탭 → AppPickerActivity 다이얼로그 진입
-- [ ] 앱 선택 후 슬롯에 바인드 (PaneAppHost EMPTY → HOSTING 전환)
-- [ ] 앱 재시작 후에도 같은 앱 바인드 복원
-- [ ] 자기 자신(`com.sampleapp.launcher`)은 picker 목록에 없음
+- [ ] 항목 추가/편집 → 상세 저장 → 리스트 즉시 반영
+- [ ] 앱 재시작 후 항목/정렬/설정 복원 (Room `items` + SharedPreferences)
+- [ ] 삭제 → Undo 스낵바 → 실행취소 시 재삽입
+- [ ] (개발자 옵션) 스키마 버전 증분 빌드에서 기존 데이터 마이그레이션 후 보존
 
-## 5. 시스템 권한 fail-soft
+## 5. 자가 업데이트 fail-soft
 
-- [ ] 일반 앱 환경(시그너처 미부여) - VirtualDisplay 생성 실패 시 Toast 안내 + 크래시 0건
-- [ ] adb logcat 에서 PaneAppHost 의 try-catch 경고 로그만 노출 (RuntimeException 0건)
+- [ ] 네트워크 없음/타임아웃 - 업데이트 체크 실패 시 Toast 안내 + 크래시 0건
+- [ ] adb logcat 에서 OtaChecker 의 try-catch 경고 로그만 노출 (RuntimeException 0건)
+- [ ] 원격 versionCode 가 로컬보다 높을 때만 다운로드 안내
 
-## 6. 비율 + 호스팅 동시
+## 6. 대량 데이터 동작
 
-- [ ] 좌측에 시계, 우측에 음악 동시 호스팅
-- [ ] 디바이더 드래그 → 양쪽 호스팅 화면이 끊김 없이 비율 변화
+- [ ] 항목 수백 개에서 스크롤 부드러움 (DiffUtil + 페이지네이션)
+- [ ] 정렬/검색 전환 시 끊김 없이 리스트 갱신
 
 ---
 
-체크리스트 완료 시 `/sync_brain` 으로 STATE 갱신을 권장 (특히 Phase 5 시그너처 환경 실 검증 결과).
+체크리스트 완료 시 `/sync_brain` 으로 STATE 갱신을 권장 (특히 스키마 버전/시그너처 환경 실 검증 결과).

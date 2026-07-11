@@ -56,12 +56,12 @@ CLAUDE.md 가 가벼운 인지용, BRAIN.md 가 무거운 참조용. plan 에이
 - sharedUserId (있다면)
 - minSdk / targetSdk
 
-### D. 분할 / 비율 / 매직 넘버
+### D. 상수 / 클램프 / 매직 넘버
 
-- 분할 비율 상수 (`MIN_PERCENT`, `MAX_PERCENT`, `DEFAULT_PERCENT`)
+- 범위 상수 (예: `PAGE_SIZE`, `MAX_PAGE_SIZE`)
 - 클램프 함수 (`coerceIn`)
-- 그리드 컬럼 수 (예: Picker column = 6)
-- 매직 플래그 (예: `VIRTUAL_DISPLAY_FLAG_TRUSTED = 1 shl 5 = 32`)
+- 그리드 컬럼 수 (예: 리스트 column = 2, sw600dp 는 3)
+- 매직 넘버 (예: `OTA_CHECK_TIMEOUT_MS = 10_000`)
 
 ### E. 보안 / 인증
 
@@ -81,22 +81,22 @@ CLAUDE.md 가 가벼운 인지용, BRAIN.md 가 무거운 참조용. plan 에이
 ## CLAUDE.md 비타협 표 골격
 
 ```markdown
-## 6. 런처 비타협 항목
+## 6. 앱 비타협 항목
 
 | # | 항목 | ZONE | 비고 |
 |---|---|---|---|
-| 1 | `<intent-filter>` 의 MAIN+HOME+DEFAULT+LAUNCHER 4개 | Frozen | 변경 = 사용자 컨펌 |
-| 2 | `screenOrientation="landscape"` | Frozen | 회전 허용 = 사용자 컨펌 |
-| 3 | `configChanges` 8종 풀세트 | Frozen | Activity 재생성 방지 |
+| 1 | `<intent-filter>` 의 MAIN+LAUNCHER | Frozen | 변경 = 사용자 컨펌 |
+| 2 | `packageName` / `applicationId` | Frozen | 변경 = 사용자 컨펌 |
+| 3 | Room `@Database(version)` 증분 시 Migration 동반 | Frozen | 누락 = 데이터 손실 |
 | ... | ... | ... | ... |
 
-## 7. 분할 / Prefs 비타협 항목
+## 7. 저장 / 상수 비타협 항목
 
 | # | 항목 | ZONE | 비고 |
 |---|---|---|---|
-| 1 | `MIN_PERCENT 0.20 / MAX_PERCENT 0.80 / DEFAULT_PERCENT 0.70` 상수 | Frozen | 동시 변경 금지 |
-| 2 | 비율 적용 시 `coerceIn(MIN_PERCENT, MAX_PERCENT)` 호출 | Frozen | 클램프 누락 = FAIL |
-| 3 | Picker 그리드 column = 6 | Evolvable | 근거 명시 시 일반 task 경로에서 조정 가능 |
+| 1 | `PAGE_SIZE 20 / MAX_PAGE_SIZE 100` 상수 | Frozen | 동시 변경 금지 |
+| 2 | 페이지 적용 시 `coerceIn(1, MAX_PAGE_SIZE)` 호출 | Frozen | 클램프 누락 = FAIL |
+| 3 | 리스트 그리드 column = 2 | Evolvable | 근거 명시 시 일반 task 경로에서 조정 가능 |
 | ... | ... | ... | ... |
 ```
 
@@ -115,14 +115,14 @@ CLAUDE.md 가 가벼운 인지용, BRAIN.md 가 무거운 참조용. plan 에이
 ## BRAIN.md 비타협 상세 골격
 
 ```markdown
-## 9. 분할 / Picker 비타협 항목 (상세)
+## 9. 저장 / 상수 비타협 항목 (상세)
 
 | 영역 | 규칙 | 매직 넘버 | 변경 시 마이그레이션 |
 |---|---|---|---|
-| 분할 비율 상수 | MIN/MAX/DEFAULT 동시 변경 금지 | 0.20 / 0.80 / 0.70 | (자동) 기존 영구값 coerceIn 시 새 범위 적용 - 기능 안전 |
-| 클램프 호출 | coerceIn 누락 시 화면 깨짐 | - | 코드 검색 (`coerceIn(MIN_PERCENT`) |
-| Guideline 단위 | layout_constraintGuide_percent (0.0~1.0) | - | dp 절대값 금지 - 리뷰 시 자동 감지 |
-| Picker 그리드 | GridLayoutManager column = 6 | 6 | 변경 시 dev_sampleapp.md 에 근거 명시 |
+| 페이지네이션 상수 | PAGE_SIZE/MAX_PAGE_SIZE 동시 변경 금지 | 20 / 100 | (자동) 기존 값 coerceIn 시 새 범위 적용 - 기능 안전 |
+| 클램프 호출 | coerceIn 누락 시 과도 로드 | - | 코드 검색 (`coerceIn(1, MAX_PAGE_SIZE`) |
+| Room 스키마 | @Database(version) 증분 시 Migration 동반 | - | Migration 누락 = 데이터 손실 |
+| 리스트 그리드 | GridLayoutManager column = 2 | 2 | 변경 시 dev_sampleapp.md 에 근거 명시 |
 | ... | ... | ... | ... |
 ```
 
@@ -135,23 +135,23 @@ CLAUDE.md 가 가벼운 인지용, BRAIN.md 가 무거운 참조용. plan 에이
 `plan_<project>` 서브에이전트가 plan.md 작성 시 자동 포함하는 섹션:
 
 ```markdown
-## 런처 영향 평가 체크리스트
+## 앱 진입 영향 평가 체크리스트
 
-- [ ] CATEGORY_HOME / DEFAULT / LAUNCHER 인텐트 필터 변경 여부
-- [ ] screenOrientation="landscape" 변경 여부
-- [ ] configChanges 풀세트 변경 여부
-- [ ] allowBackup 변경 여부
-- [ ] 시그너처 권한 추가/제거 여부
+- [ ] MAIN / LAUNCHER 인텐트 필터 변경 여부
+- [ ] packageName / applicationId 변경 여부
+- [ ] INTERNET 권한(OTA) 제거 여부
+- [ ] FileProvider authority 변경 여부
+- [ ] 릴리스 시그너처 config 추가/제거 여부
 
 **사용자 컨펌 필요 항목**: 위 체크리스트에서 ☑ 된 항목 나열
 
-## 분할 / Prefs 일관성 체크리스트
+## 저장 / 상수 일관성 체크리스트
 
-- [ ] PaneSlot enum 추가/순서 변경 여부
-- [ ] PaneSlot.storageKey 변경 여부
-- [ ] MIN_PERCENT / MAX_PERCENT / DEFAULT_PERCENT 상수 변경 여부
-- [ ] SharedPreferences 파일명 변경 여부
-- [ ] SharedPreferences 키명 변경 여부
+- [ ] Room entity(items) 컬럼 변경 여부
+- [ ] @Database(version) 증분 시 Migration 동반 여부
+- [ ] SortOrder enum 추가/순서·storageKey 변경 여부
+- [ ] PAGE_SIZE / MAX_PAGE_SIZE / OTA_CHECK_TIMEOUT_MS 상수 변경 여부
+- [ ] SharedPreferences 파일명("settings"/"sync_state")·키명 변경 여부
 
 **리스크**: 위 체크리스트에서 ☑ 된 항목 있으면 마이그레이션 절차 명시
 ```
@@ -191,35 +191,35 @@ CLAUDE.md 가 가벼운 인지용, BRAIN.md 가 무거운 참조용. plan 에이
 
 ## 예시 - sampleapp 의 비타협 항목 (참조)
 
-### CLAUDE.md §6 (런처)
+### CLAUDE.md §6 (앱 진입)
 
 | # | 항목 | ZONE |
 |---|---|---|
-| 1 | `<intent-filter>` 의 MAIN+HOME+DEFAULT+LAUNCHER 4개 | Frozen |
-| 2 | `screenOrientation="landscape"` | Frozen |
-| 3 | `configChanges` 8종 풀세트 | Frozen |
-| 4 | `launchMode="singleTask"` + `stateNotNeeded="true"` | Frozen |
-| 5 | `resizeableActivity="false"` | Frozen |
-| 6 | `AppPickerActivity.exported="false"` | Frozen |
-| 7 | 시그너처 권한 4종 | Frozen |
-| 8 | 자기 자신 picker 제외 (`InstalledApps.selfPkg` 필터) | Frozen |
+| 1 | `<intent-filter>` 의 MAIN+LAUNCHER | Frozen |
+| 2 | `packageName` / `applicationId` = com.sampleapp.app | Frozen |
+| 3 | Room `@Database(version)` 증분 시 Migration 동반 | Frozen |
+| 4 | Room entity 테이블/컬럼명 (`items`) | Frozen |
+| 5 | 릴리스 시그너처 config | Frozen |
+| 6 | `INTERNET` 권한 (OTA) | Frozen |
+| 7 | `FileProvider` authority | Frozen |
+| 8 | `DetailFragment.exported="false"` | Frozen |
 
-### CLAUDE.md §7 (분할 / Prefs)
+### CLAUDE.md §7 (저장 / 상수)
 
 | # | 항목 | ZONE |
 |---|---|---|
-| 1 | `MIN_PERCENT 0.20 / MAX_PERCENT 0.80 / DEFAULT_PERCENT 0.70` 상수 | Frozen |
-| 2 | 비율 적용 시 `coerceIn(...)` 호출 | Frozen |
-| 3 | `layout_constraintGuide_percent` (0.0~1.0) | Frozen |
-| 4 | SharedPreferences 파일 분리 (`split_ratio` ↔ `pane_slots`) | Frozen |
-| 5 | `PaneSlot` enum 순서 / `storageKey` 변경 금지 | Frozen |
-| 6 | Picker 그리드 column = 6 | Frozen |
-| 7 | DividerHandle 24dp / DividerVisual 4dp 분리 | Frozen |
-| 8 | `VIRTUAL_DISPLAY_FLAG_TRUSTED = 1 shl 5 = 32` | Frozen |
+| 1 | `PAGE_SIZE 20 / MAX_PAGE_SIZE 100` 상수 | Frozen |
+| 2 | 페이지 적용 시 `coerceIn(1, MAX_PAGE_SIZE)` 호출 | Frozen |
+| 3 | `SYNC_INTERVAL_MIN 15 / MAX 1440` (분) clamp | Frozen |
+| 4 | SharedPreferences 파일 분리 (`settings` ↔ `sync_state`) | Frozen |
+| 5 | `SortOrder` enum 순서 / `storageKey` 변경 금지 | Frozen |
+| 6 | 리스트 그리드 column = 2 | Frozen |
+| 7 | SwipeThreshold 96dp / RippleRadius 24dp 분리 | Frozen |
+| 8 | `OTA_CHECK_TIMEOUT_MS = 10_000` | Frozen |
 
 8개씩 - 한 화면에 인지 가능한 한계.
 
-> 참고: 위 골격 예시(§CLAUDE.md 비타협 표 골격)에서는 Picker column 을 Evolvable 판단의 **예시**로 태깅했지만, sampleapp 예시는 보수적으로 Frozen 으로 운영한다. ZONE 판정은 프로젝트가 감당할 회귀 리스크에 따라 달라진다 - 확신이 없으면 Frozen 이 안전 기본값.
+> 참고: 위 골격 예시(§CLAUDE.md 비타협 표 골격)에서는 리스트 column 을 Evolvable 판단의 **예시**로 태깅했지만, sampleapp 예시는 보수적으로 Frozen 으로 운영한다. ZONE 판정은 프로젝트가 감당할 회귀 리스크에 따라 달라진다 - 확신이 없으면 Frozen 이 안전 기본값.
 
 ---
 

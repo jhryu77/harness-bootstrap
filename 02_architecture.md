@@ -166,7 +166,7 @@ hook command 는 **상대 경로** 사용 (절대 경로는 OS/사용자 의존)
 └── (코드 모듈들)
 ```
 
-sampleapp_launcher 가 이 패턴.
+sampleapp_app 가 이 패턴.
 
 ### Multi-repo (여러 repo, 각각 하네스)
 
@@ -188,7 +188,7 @@ workspace/
 
 각 repo 의 BRAIN.md 에 **다른 repo 와의 인터페이스** (API 스펙 / 공유 시크릿 위치 / Supabase 테이블 등) 를 명시하는 섹션을 둔다.
 
-sampleapp 의 경우 `sampleapp_launcher/` (Android) + `sampleapp_server/` (Next.js admin) + Supabase (외부 SaaS) 의 3-tier 구성이지만 client/server 각자 자체 하네스를 운영한다.
+sampleapp 의 경우 `sampleapp_app/` (Android) + `sampleapp_server/` (Next.js admin) + Supabase (외부 SaaS) 의 3-tier 구성이지만 client/server 각자 자체 하네스를 운영한다.
 
 ### Multi-repo 시 settings.local.json 권한 확장
 

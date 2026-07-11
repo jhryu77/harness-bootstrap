@@ -10,12 +10,12 @@
   archive 대상으로 fallback 판정하고 "[FALLBACK mtime]" 표기
 
 사용법:
-    python .agent/scripts/archive_tasks.py            # dry-run (기본) - 대상 목록만 출력
-    python .agent/scripts/archive_tasks.py --apply    # 실제 이동 실행
-    python .agent/scripts/archive_tasks.py --minutes 60   # fallback mtime 임계 조정
+    python3 .agent/scripts/archive_tasks.py            # dry-run (기본) - 대상 목록만 출력
+    python3 .agent/scripts/archive_tasks.py --apply    # 실제 이동 실행
+    python3 .agent/scripts/archive_tasks.py --minutes 60   # fallback mtime 임계 조정
 
 - plan 워크플로 진입 시(plan_<project> / plan_harness) 자동 archive 단계에서
-  `python .agent/scripts/archive_tasks.py --apply` 를 호출한다.
+  `python3 .agent/scripts/archive_tasks.py --apply` 를 호출한다.
 - 선택 자산 - 스크립트가 없으면 기존 find/PowerShell 룰(mtime 기준)을 사용한다.
 - Python 3.7+ 표준 라이브러리만 사용 (PyYAML 등 외부 의존성 없음).
 - fail-open: 예기치 못한 예외 시 조용히 통과한다 (exit 0).

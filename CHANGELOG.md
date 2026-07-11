@@ -4,6 +4,24 @@
 
 ---
 
+## v1.6.5 - 2026-07-11
+
+### Fixed
+
+- **CI Gate hook 크로스플랫폼 (윈도우/맥 공용)** - PostToolUse hook·pre_gate·stop_gate command 가 bare `python …` 이라 **macOS 에서 exit 127 로 조용히 실패**했다(macOS 는 `python` 이 PATH 에 없고 `python3` 만 존재. Windows 는 보통 반대). command 를 `sh -c 'command -v python3 >/dev/null 2>&1 && exec python3 … || exec python …'` **인터프리터 감지형**으로 교체 - Claude Code hook 은 macOS=sh / Windows=git-bash(기본) 로 실행되므로 한 줄로 양 OS 공용. `command -v` 로 **인터프리터 존재만** 판별해 `exec`(스크립트 종료코드에 `||` 를 걸면 CI Gate 의 non-zero=위반보고를 폴백으로 오인해 이중 실행되므로 금지). 대상: `templates/settings.local.json.template`, `templates/settings.pretooluse.json.example`, `examples/sampleapp_snapshot/settings.local.json` + hook JSON 을 보여주는 문서(`01/02/06/09`).
+- **문서·에이전트·스크립트의 수동 python 명령 정합** - eval_harness/dev_harness 실행 블록은 `command -v` 감지형으로, 그 외 문서/테이블/docstring 의 실행 명령(`python -m py_compile`, `python .agent/scripts/*.py` 등)은 canonical `python3` 로 통일(테이블 `||` 파손·가독성 회피). `python3` 부재 Windows 는 `python` 대체 - `CLAUDE.md.template`/`06_ci_gate.md` 에 인터프리터 규약 주석 추가. (스크립트 내부 서브프로세스는 `pre_gate.py` 가 `sys.executable` 사용으로 기존부터 크로스플랫폼 안전 - 무변경.)
+
+### Changed
+
+- **상태바(statusLine) 부트스트랩 필수화** - `templates/statusline.py`(전역 상태바: 모델/폴더/git + 컨텍스트·5H·7D 사용률·reset 카운트다운)를 종전 "(선택) 개인 자산" 에서 **하네스 적용 시 필수 반영**으로 승격(세션 예산 가시성 = 워크플로 판단 근거). `BOOTSTRAP_PROMPT.md` 에 필수 스텝 `6.6 상태바 설치` 신설, `OVERVIEW.md`/`README.md`/`statusline.py` docstring 의 "(선택)" → "(필수)". 등록 command 도 감지형(`sh -c 'command -v python3 … && exec python3 … || exec python …'`)으로 - bare `python <HOME>/.claude/statusline.py` 는 macOS 에서 상태바가 안 떴다.
+
+### Added
+
+- **statusLine 에 `/effort` 상태 표시** - `templates/statusline.py` 가 세션 JSON 의 `effort.level`(low/medium/high/xhigh/max, 공식 docs 확인 + 실측)을 모델 라벨 옆 `[high]` 로 강도색 표기(low=녹/medium=청/high=황/xhigh=마젠타/max=적). 모델이 effort 파라미터 미지원이면 필드 부재 → 우아하게 생략.
+- **statusLine `refreshInterval: 60` 권장** - 세션 **유휴 상태에서도** 사용률·reset 카운트다운·`/effort` 상태가 갱신되도록 등록 예시(BOOTSTRAP 6.6 / 09 단계9 / docstring)에 `"refreshInterval": 60`(초=1분) 추가. Claude Code 문서상 이벤트 갱신에 **추가로** 동작하며 로컬 실행이라 API 토큰 무소비.
+
+---
+
 ## v1.6.4 - 2026-07-06
 
 ### Changed

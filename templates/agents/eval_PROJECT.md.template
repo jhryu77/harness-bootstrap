@@ -51,7 +51,7 @@ model: inherit  # high/medium/low 로 명시적 지정 가능 - 05_subagent_desi
 | 진입점 보존 | `grep -E "<진입점 패턴>" <매니페스트>` |
 | 비타협 상수 보존 | `grep -E "{{MIN_PERCENT_PATTERN}}" <상수 파일>` |
 | 영구화 키 보존 | `grep -E "<키 패턴>" <prefs 파일>` |
-| (해당 시) CI Gate sanity | `python -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py` |
+| (해당 시) CI Gate sanity | `python3 -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py` |
 | (배포 task 시) 외부 검증 | adb logcat / curl / MCP execute_sql |
 
 ## 산출물 - result (텍스트 반환)

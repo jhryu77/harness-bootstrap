@@ -15,7 +15,7 @@ Claude Code PostToolUse(Edit|Write) hook.
                         WARN (FAIL 아님 - /dev_harness 승인 플로우 밖이면 중단 안내)
 
 진입점:
-  - 인자 직접 호출:  python ci_gate_{{PROJECT}}.py <path>
+  - 인자 직접 호출:  python3 ci_gate_{{PROJECT}}.py <path>
   - PostToolUse hook: stdin JSON (file_path / path / toolInput.file_path 모두 지원)
 """
 
@@ -225,7 +225,7 @@ def _resolve_path_from_stdin() -> str:
 
 
 def main():
-    # 직접 호출: python ci_gate_{{PROJECT}}.py <path>
+    # 직접 호출: python3 ci_gate_{{PROJECT}}.py <path>
     if len(sys.argv) > 1:
         gate(sys.argv[1])
         return

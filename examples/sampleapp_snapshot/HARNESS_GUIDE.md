@@ -73,7 +73,7 @@ sampleapp_launcher/                                 (Mac: /Users/<user>/workspac
 
 ## 4. CI Gate (자동 정적 검증)
 
-`.claude/settings.local.json` 의 PostToolUse hook 이 매 `Edit|Write` 시 `python .agent/scripts/ci_gate_sampleapp.py` 실행.
+`.claude/settings.local.json` 의 PostToolUse hook 이 매 `Edit|Write` 시 `ci_gate_sampleapp.py`(인터프리터 자동 감지: macOS python3/Windows python) 실행.
 
 | # | 검사 | 위반 시 |
 |---|---|---|

@@ -2,7 +2,7 @@
 """
 pre_gate.py - Claude Code PreToolUse(Bash) hook. **선택(opt-in) 자산 - 기본 미등록.**
 등록법: settings.local.json 의 hooks.PreToolUse 에 matcher "Bash" + command
-"python .agent/scripts/pre_gate.py" 추가 (templates/settings.pretooluse.json.example 참조).
+"python3 .agent/scripts/pre_gate.py" 추가 (templates/settings.pretooluse.json.example 참조).
 
 검사 항목:
   [1] 파괴적 명령 차단 (DENY) - rm -rf 루트급 / git push --force → main·master /

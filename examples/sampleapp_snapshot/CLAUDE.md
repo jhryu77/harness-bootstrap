@@ -57,7 +57,7 @@ OTA 릴리스 (versionCode 증분 + Storage + ota_manifests):
 
 ## 3. CI Gate (자동 정적 검증)
 
-`.claude/settings.local.json` 의 PostToolUse hook 이 매 `Edit|Write` 시 `python .agent/scripts/ci_gate_sampleapp.py` 를 자동 호출. 정상 시 무출력. 위반 시 stderr 로 Claude 컨텍스트에 주입.
+`.claude/settings.local.json` 의 PostToolUse hook 이 매 `Edit|Write` 시 `ci_gate_sampleapp.py`(인터프리터 자동 감지: macOS python3/Windows python) 를 자동 호출. 정상 시 무출력. 위반 시 stderr 로 Claude 컨텍스트에 주입.
 
 | 검사 | 위반 시 |
 |---|---|

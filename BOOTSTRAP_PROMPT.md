@@ -33,7 +33,7 @@
 
 **참조 자산** (이 폴더 안에 있다):
 - `01_philosophy.md` ~ `09_adapt_checklist.md` - 원칙 + 절차
-- `templates/` - 28개 템플릿 (플레이스홀더 포함, `statusline.py` 는 치환 불필요 전역 자산)
+- `templates/` - 28개 템플릿 (플레이스홀더 포함, `statusline.py` 는 치환 불필요 전역 자산·부트스트랩 필수)
 - `templates/scripts/` - 선택 스크립트 7종 (archive/doctor/manifest/pre_gate/stop_gate/model_policy/glm_mode) - 플레이스홀더 없이 동작
 - `templates/scripts/model_policy.py` - 이후 model 정책을 바꿀 때 사용
 - `templates/scripts/glm_mode.py` - GLM 병행 (실험적, opt-in, 부트스트랩 절차에는 포함 안 함)
@@ -367,11 +367,11 @@ def check_<immutable_name>(path, content):
 ### 5.4 검증
 
 ```bash
-python -m py_compile .agent/scripts/ci_gate_<project>.py && echo "py_compile OK"
+python3 -m py_compile .agent/scripts/ci_gate_<project>.py && echo "py_compile OK"
 
 # 시뮬 - 임시 파일 생성하여 stderr 확인
 echo "test" > tmp_test.txt
-python .agent/scripts/ci_gate_<project>.py tmp_test.txt
+python3 .agent/scripts/ci_gate_<project>.py tmp_test.txt
 rm tmp_test.txt
 # → "임시 파일 prefix(tmp_*)..." stderr 출력 확인
 ```
@@ -418,6 +418,27 @@ mkdir -p .agent/tasks/archive
 mkdir -p tmp  # 임시 작업용 (CI Gate 가 권장)
 ```
 
+### 6.6 상태바(statusLine) 설치 [필수]
+
+Claude Code 전역 상태바(모델/폴더/git 브랜치 + 컨텍스트·5H·7D 사용률 + reset 카운트다운)는 하네스 적용 시 **필수로 반영**한다 — 세션 예산 가시성이 "이 턴에 어디까지 할지" 판단 근거라 워크플로의 일부다.
+
+1. `templates/statusline.py` 를 `~/.claude/statusline.py` 로 복사 (플레이스홀더 치환 불필요, 그대로 복사).
+2. `~/.claude/settings.json` 의 `statusLine` 에 등록 — command 는 **인터프리터 감지형**(macOS `python3` / Windows `python` 공용):
+
+```json
+"statusLine": {
+  "type": "command",
+  "command": "sh -c 'command -v python3 >/dev/null 2>&1 && exec python3 <HOME>/.claude/statusline.py || exec python <HOME>/.claude/statusline.py'",
+  "padding": 0,
+  "refreshInterval": 60
+}
+```
+
+   `<HOME>` 는 실제 홈 절대경로로 치환(`/Users/<you>` · `/home/<you>` · `C:/Users/<you>`). `refreshInterval: 60`(초=1분)은 세션 **유휴 상태에서도** 사용률·reset 카운트다운·`/effort` 상태를 최신화한다(이벤트 갱신에 추가, API 비소비).
+3. 검증: 새 세션에서 상태바에 `CW ▓… %` + 모델 옆 `[high]`(현재 /effort) 가 뜨면 OK.
+
+> **주의**: bare `python <HOME>/.claude/statusline.py` 는 macOS(python 부재)에서 상태바가 **안 뜬다** — 감지형 필수. `~/.claude/`(전역)라 프로젝트마다 재설치는 불필요하지만, 하네스 미적용으로 넘어가지 않도록 부트스트랩 필수 항목으로 둔다. PowerShell 폴백 Windows 는 git-bash 필요(`sh` 부재 시 미동작).
+
 ---
 
 ## 단계 7 - 첫 task 로 검증
@@ -426,10 +447,10 @@ mkdir -p tmp  # 임시 작업용 (CI Gate 가 권장)
 
 ```bash
 # CI Gate 컴파일
-python -m py_compile .agent/scripts/ci_gate_<project>.py
+python3 -m py_compile .agent/scripts/ci_gate_<project>.py
 
 # settings.local.json JSON
-python -c "import json; json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK')"
+python3 -c "import json; json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK')"
 
 # frontmatter 점검 (commands)
 for f in .claude/commands/*.md; do
@@ -456,7 +477,7 @@ grep -q "ci_gate_<project>.py" .claude/settings.local.json && \
 
 모든 명령이 OK / 빈 출력이면 통과.
 
-(선택) `templates/scripts/` 의 스크립트 5종(`archive_tasks.py` / `harness_doctor.py` / `harness_manifest.py` / `pre_gate.py` / `stop_gate.py`)을 `.agent/scripts/` 로 복사하고 doctor 를 1회 실행해 설치 무결성을 확인한다. manifest 는 `python .agent/scripts/harness_manifest.py generate --kit-version 1.5.0` 로 생성. (pre_gate/stop_gate 는 opt-in - `settings.pretooluse.json.example` 참조)
+(선택) `templates/scripts/` 의 스크립트 5종(`archive_tasks.py` / `harness_doctor.py` / `harness_manifest.py` / `pre_gate.py` / `stop_gate.py`)을 `.agent/scripts/` 로 복사하고 doctor 를 1회 실행해 설치 무결성을 확인한다. manifest 는 `python3 .agent/scripts/harness_manifest.py generate --kit-version 1.5.0` 로 생성. (pre_gate/stop_gate 는 opt-in - `settings.pretooluse.json.example` 참조)
 
 ### 7.2 최종 보고
 
@@ -474,6 +495,7 @@ grep -q "ci_gate_<project>.py" .claude/settings.local.json && \
 - .agent/scripts/ci_gate_<project>.py
 - .agent/tasks/archive/
 - tmp/
+- ~/.claude/statusline.py + `~/.claude/settings.json` statusLine 등록 [필수, 전역]
 
 ### 검증 결과
 - py_compile: PASS

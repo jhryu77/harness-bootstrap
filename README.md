@@ -55,7 +55,7 @@ harness_bootstrap/
 │   ├── HARNESS_GUIDE.md.template
 │   ├── settings.local.json.template
 │   ├── ci_gate.py.template
-│   ├── statusline.py                    (선택) 전역 상태바 - ~/.claude/ 에 그대로 복사
+│   ├── statusline.py                    (필수) 전역 상태바 - ~/.claude/ 에 그대로 복사
 │   ├── settings.pretooluse.json.example (선택) PreToolUse hook opt-in 등록 예시
 │   ├── scripts/                         (선택) 스크립트 자산 7종 - .agent/scripts/ 로 복사
 │   │   ├── archive_tasks.py             (선택) status 기준 task 아카이브 (dry-run 기본)

@@ -10,7 +10,7 @@ Claude Code PostToolUse(Edit|Write) hook.
   [3] Kotlin 괄호    - .kt/.kts 의 { } 매칭 경량 카운트 체크
 
 진입점:
-  - 인자 직접 호출:  python ci_gate_sampleapp.py <path>
+  - 인자 직접 호출:  python3 ci_gate_sampleapp.py <path>
   - PostToolUse hook: stdin JSON (file_path / path / toolInput.file_path 모두 지원)
 """
 
@@ -129,7 +129,7 @@ def _resolve_path_from_stdin() -> str:
 
 
 def main():
-    # 직접 호출: python ci_gate_sampleapp.py <path>
+    # 직접 호출: python3 ci_gate_sampleapp.py <path>
     if len(sys.argv) > 1:
         gate(sys.argv[1])
         return

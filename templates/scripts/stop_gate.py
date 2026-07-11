@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 stop_gate.py - Claude Code Stop hook. **선택(opt-in) 자산 - 기본 미등록. advisory 전용.**
-등록법: settings.local.json 의 hooks.Stop 에 command "python .agent/scripts/stop_gate.py"
+등록법: settings.local.json 의 hooks.Stop 에 command "python3 .agent/scripts/stop_gate.py"
 추가 (templates/settings.pretooluse.json.example 참조 - Stop 은 matcher 불필요).
 스크립트는 templates/scripts/stop_gate.py 를 .agent/scripts/stop_gate.py 로 복사해 사용.
 

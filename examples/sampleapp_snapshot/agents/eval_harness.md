@@ -37,21 +37,21 @@ done
 
 ### H2. CI Gate 스크립트 구문
 ```bash
-python -m py_compile .agent/scripts/ci_gate_sampleapp.py && echo "py_compile OK"
+python3 -m py_compile .agent/scripts/ci_gate_sampleapp.py && echo "py_compile OK"
 ```
 
 ### H3. settings.local.json JSON 파싱
 ```bash
-python -c "import json; d=json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK; hooks=', list(d.get('hooks', {}).keys()))"
+python3 -c "import json; d=json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK; hooks=', list(d.get('hooks', {}).keys()))"
 ```
 
 ### H4. hook command 일치성
 
 `settings.local.json` 의 PostToolUse hook command 가 실제 존재하는 스크립트를 가리키는지:
 ```bash
-HOOK_CMD=$(python -c "import json; d=json.load(open('.claude/settings.local.json', encoding='utf-8')); print(d['hooks']['PostToolUse'][0]['hooks'][0]['command'])")
+HOOK_CMD=$(python3 -c "import json; d=json.load(open('.claude/settings.local.json', encoding='utf-8')); print(d['hooks']['PostToolUse'][0]['hooks'][0]['command'])")
 echo "hook command: $HOOK_CMD"
-# 기대: "python .agent/scripts/ci_gate_sampleapp.py"
+# 기대: "sh -c 'command -v python3 >/dev/null 2>&1 && exec python3 .agent/scripts/ci_gate_sampleapp.py || exec python .agent/scripts/ci_gate_sampleapp.py'"
 [ -f .agent/scripts/ci_gate_sampleapp.py ] && echo "script exists" || echo "script MISSING"
 ```
 

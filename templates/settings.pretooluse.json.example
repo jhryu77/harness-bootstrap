@@ -1,5 +1,6 @@
 {
   "_comment": "opt-in 훅 예시 (PreToolUse pre_gate + Stop stop_gate) - settings.local.json 의 hooks 키에 필요한 블록만 병합해 사용. 둘 다 기본 미등록 선택 자산: pre_gate 는 파괴적 Bash 차단(A12) + 커밋 게이트(A11), stop_gate 는 턴 종료 시 변경 파일 광역 검사(advisory 전용, A16). 해당 스크립트를 templates/scripts/ 에서 .agent/scripts/ 로 복사할 것. Stop 은 matcher 없이 hooks 배열만 둔다. JSON 은 주석 불가라 이 안내를 _comment 키로 제공.",
+  "_comment_interpreter": "hook command 는 sh -c 인터프리터 감지형 - macOS(python3 전용)와 Windows(git-bash 기본, python) 공용. command -v 로 인터프리터 존재만 감지해 exec(스크립트 종료코드에 || 를 걸면 CI Gate non-zero 를 폴백으로 오인해 이중 실행되므로 금지). Windows 는 git-bash 필요(PowerShell 폴백 시 sh 부재).",
   "hooks": {
     "PostToolUse": [
       {
@@ -7,7 +8,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .agent/scripts/ci_gate_{{PROJECT}}.py"
+            "command": "sh -c 'command -v python3 >/dev/null 2>&1 && exec python3 .agent/scripts/ci_gate_{{PROJECT}}.py || exec python .agent/scripts/ci_gate_{{PROJECT}}.py'"
           }
         ]
       }
@@ -18,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .agent/scripts/pre_gate.py"
+            "command": "sh -c 'command -v python3 >/dev/null 2>&1 && exec python3 .agent/scripts/pre_gate.py || exec python .agent/scripts/pre_gate.py'"
           }
         ]
       }
@@ -28,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .agent/scripts/stop_gate.py"
+            "command": "sh -c 'command -v python3 >/dev/null 2>&1 && exec python3 .agent/scripts/stop_gate.py || exec python .agent/scripts/stop_gate.py'"
           }
         ]
       }

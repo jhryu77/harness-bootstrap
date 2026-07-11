@@ -49,7 +49,7 @@ sampleapp 하네스 자체(`.claude/` `.agent/scripts/` `.agent/context/` `.agen
 
 1. 변경 범위 확정
 2. 변경 파일 수정
-3. 자체 검증: `python -m py_compile .agent/scripts/ci_gate_sampleapp.py` + `python -c "import json; json.load(open('.claude/settings.local.json'))"`
+3. 자체 검증: `python3 -m py_compile .agent/scripts/ci_gate_sampleapp.py` + `python3 -c "import json; json.load(open('.claude/settings.local.json'))"`
 4. eval_harness 무결성 PASS
 5. /sync_brain (필요 시) → /commit_push
 
@@ -83,7 +83,7 @@ tasklist.md 표준 포맷 (4섹션):
 - [ ] frontmatter 정합성 (commands: description / agents: name+description+model+tools)
 
 ### TC: 정적 검증
-- [ ] python -m py_compile ci_gate_sampleapp.py
+- [ ] python3 -m py_compile ci_gate_sampleapp.py
 - [ ] json.load settings.local.json
 - [ ] hook command 일치성 (settings 의 command 와 실제 스크립트 경로)
 

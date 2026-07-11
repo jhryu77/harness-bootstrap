@@ -14,7 +14,7 @@ description: 하네스 변경 결과 평가 - eval_harness 서브에이전트로
 2. 점검 항목 실행:
    - 디렉토리 / 파일 무결성 (`.claude/`, `.agent/`, CLAUDE.md 필수 파일)
    - frontmatter 정합성 - commands 의 `description`, agents 의 `name/description/model/tools`, **eval 계열의 `permissionMode: plan` 포함**
-   - CI Gate 스크립트 구문 (`python -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py`)
+   - CI Gate 스크립트 구문 (`python3 -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py`)
    - `settings.local.json` JSON 파싱
    - hook 일치성 (settings 의 hook command ↔ 실제 스크립트 존재)
    - archive 동작 (`.agent/tasks/archive/` 존재 + task 폴더 카운트)

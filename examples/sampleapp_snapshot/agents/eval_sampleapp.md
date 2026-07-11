@@ -30,7 +30,7 @@ disallowedTools:
 git diff --name-only HEAD 2>/dev/null \
   | grep -E "\.kt(s)?$" \
   | while read -r f; do
-      python .agent/scripts/ci_gate_sampleapp.py "$f"
+      python3 .agent/scripts/ci_gate_sampleapp.py "$f"
     done
 
 # Gradle 컴파일 (시간이 길면 생략 가능)

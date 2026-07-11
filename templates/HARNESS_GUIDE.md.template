@@ -46,7 +46,7 @@
 └── (활성 task 폴더들)
 ```
 
-archive 룰 - 스크립트가 있으면 우선: `python .agent/scripts/archive_tasks.py --apply` (status: done 이동 + frontmatter 없는 폴더만 mtime fallback).
+archive 룰 - 스크립트가 있으면 우선: `python3 .agent/scripts/archive_tasks.py --apply` (status: done 이동 + frontmatter 없는 폴더만 mtime fallback).
 
 스크립트 없을 때 fallback (mtime 기준):
 
@@ -162,8 +162,10 @@ mtime 도 자동 갱신되므로 다시 archive 되기까지 120분 여유. 단 
 ### Q. CI Gate hook 이 작동 안 해요
 
 ```bash
-python -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py && echo "py_compile OK"
-python -c "import json; json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK')"
+# 인터프리터 감지: macOS=python3 전용 / Windows(git-bash)=python
+PY="$(command -v python3 || command -v python)"
+"$PY" -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py && echo "py_compile OK"
+"$PY" -c "import json; json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK')"
 grep -q "ci_gate_{{PROJECT}}.py" .claude/settings.local.json && echo "hook 등록 OK"
 ```
 

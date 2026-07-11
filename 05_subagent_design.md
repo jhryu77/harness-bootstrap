@@ -58,8 +58,8 @@ model: inherit
 
 **적용 방법**:
 - 부트스트랩 시 - `BOOTSTRAP_PROMPT.md` 단계 1 에서 질문받는다. 답하지 않거나 "inherit/기본값" 을 선택하면 4개 템플릿 모두 기존과 동일하게 `model: inherit` 로 생성된다 (100% 하위 호환).
-- 이후 변경 - `python .agent/scripts/model_policy.py set <tier>` 언제든 실행 (선택 자산 스크립트, 없으면 수동으로 각 `.claude/agents/*.md` 의 `model:` 줄을 직접 고쳐도 된다).
-- 현재 상태 확인 - `python .agent/scripts/model_policy.py show`.
+- 이후 변경 - `python3 .agent/scripts/model_policy.py set <tier>` 언제든 실행 (선택 자산 스크립트, 없으면 수동으로 각 `.claude/agents/*.md` 의 `model:` 줄을 직접 고쳐도 된다).
+- 현재 상태 확인 - `python3 .agent/scripts/model_policy.py show`.
 
 **주의**: eval 계열은 판정 하드룰(증거 없으면 FAIL) 때문에 low 정책에서도 haiku 까지 내려가지 않고 sonnet 을 유지한다 - 판정 신뢰도가 비용보다 우선이다.
 

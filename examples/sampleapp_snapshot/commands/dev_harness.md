@@ -22,10 +22,10 @@ description: sampleapp 하네스 자체 편집 가이드 (.claude/, .agent/, CLA
 
 ```bash
 # CI Gate 스크립트 구문
-python -m py_compile .agent/scripts/ci_gate_sampleapp.py && echo "py_compile OK"
+python3 -m py_compile .agent/scripts/ci_gate_sampleapp.py && echo "py_compile OK"
 
 # settings.local.json JSON 파싱
-python -c "import json; json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK')"
+python3 -c "import json; json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK')"
 
 # frontmatter 정합성 (commands)
 for f in .claude/commands/*.md; do

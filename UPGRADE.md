@@ -21,7 +21,7 @@
 
 - manifest 가 있으면 (v1.3.0+ 부트스트랩):
   ```powershell
-  python .agent/scripts/harness_manifest.py check
+  python3 .agent/scripts/harness_manifest.py check
   ```
 - manifest 가 없으면 킷 templates/ 와 프로젝트 파일을 수동 diff.
 - 분류별 처리:
@@ -37,7 +37,7 @@
 
 - 갱신 완료 후 manifest 재생성:
   ```powershell
-  python .agent/scripts/harness_manifest.py generate --kit-version <킷 CHANGELOG 최신 버전>
+  python3 .agent/scripts/harness_manifest.py generate --kit-version <킷 CHANGELOG 최신 버전>
   ```
 
 ## §3. 네임스페이스 소유권 규약
@@ -64,7 +64,7 @@
 
 - 설치 무결성 셀프 진단:
   ```powershell
-  python .agent/scripts/harness_doctor.py
+  python3 .agent/scripts/harness_doctor.py
   ```
   - FAIL 0 확인. WARN(드리프트/manifest user_modified) 은 사유 파악 후 판단.
 - 하네스 무결성 평가: `/eval_agent_harness` 실행 - frontmatter/JSON/hook 정합성 PASS 확인.
@@ -96,11 +96,11 @@
 ### v1.2.0 → v1.3.0
 
 - [ ] 스크립트 4종 배치 (전부 선택 자산): `.agent/scripts/` 에 `harness_manifest.py` / `harness_doctor.py` / `archive_tasks.py` / `pre_gate.py` (킷 `templates/scripts/` 에서 복사 - stop_gate.py 는 v1.4.0)
-- [ ] manifest 초기 생성: `python .agent/scripts/harness_manifest.py generate --kit-version 1.3.0` - 이후 업데이트부터 §2 분류 자동화
+- [ ] manifest 초기 생성: `python3 .agent/scripts/harness_manifest.py generate --kit-version 1.3.0` - 이후 업데이트부터 §2 분류 자동화
 - [ ] `UPGRADE.md` (이 문서) 절차를 프로젝트 운영 문서에서 참조하도록 HARNESS_GUIDE 에 링크 추가
 - [ ] plan 템플릿 frontmatter 에 `status` / `tier` 필드 추가
 - [ ] PreToolUse 훅을 쓸 프로젝트만 opt-in 등록 (기본 미등록 - §6)
-- [ ] 검증: `python .agent/scripts/harness_doctor.py` FAIL 0 + `/eval_agent_harness` PASS
+- [ ] 검증: `python3 .agent/scripts/harness_doctor.py` FAIL 0 + `/eval_agent_harness` PASS
 
 ### v1.3.0 → v1.4.0
 
@@ -110,7 +110,7 @@
 - [ ] plan 감사 게이트 / HUMAN GATE / eval FAIL 재순환 상한 반영 - `agents/eval_<p>` 에이전트 + `commands/plan_agent_<p>` / `commands/eval_agent_<p>` 커맨드 재배포 또는 수동 병합
 - [ ] 세션 핸드오프 3블록 반영 - `commands/commit_push` 재배포 + HARNESS_GUIDE 의 "세션 핸드오프" 절 병합
 - [ ] @MX 태그 규율 채택 여부 결정 (03 문서 참조 - 태그 없음이 정상, 수치는 프로젝트별 조정 가능)
-- [ ] manifest 재생성: `python .agent/scripts/harness_manifest.py generate --kit-version 1.4.0`
+- [ ] manifest 재생성: `python3 .agent/scripts/harness_manifest.py generate --kit-version 1.4.0`
 
 ### v1.4.0 → v1.5.0
 
@@ -120,7 +120,7 @@ task 폴더 개명 (`.agent/signals/` → `.agent/tasks/`, `archive_tasks/` → 
 - [ ] `.claude/settings.local.json` 의 allow 목록 경로 갱신 (`mkdir -p .agent/signals` / `find .agent/signals ...` → tasks)
 - [ ] 커맨드/에이전트의 경로 서술 갱신 (kit-managed 는 재배포로 해결) + CLAUDE.md/HARNESS_GUIDE 의 경로 문구 수동 병합
 - [ ] 스크립트 3종 재배포 (archive_tasks.py / stop_gate.py / harness_doctor.py - 경로 상수 변경됨)
-- [ ] 검증: `python .agent/scripts/harness_doctor.py` FAIL 0 + manifest 재생성 (`--kit-version 1.5.0`)
+- [ ] 검증: `python3 .agent/scripts/harness_doctor.py` FAIL 0 + manifest 재생성 (`--kit-version 1.5.0`)
 
 ### v1.5.0 → v1.6.0
 
@@ -148,3 +148,13 @@ Tier S 자동 판정 규칙 구체화 (기존에는 "plan 에이전트가 판정
 - [ ] `.claude/commands/plan_agent_<project>.md` 재배포 또는 tasklist.md Tier M/L 전용 문구 수동 병합
 - [ ] 이미 진행 중인 Tier S task 가 있다면 tasklist.md 존재 여부로 FAIL 판정하지 않도록 eval 시 유의 (과도기 1회성)
 - [ ] manifest 재생성 (--kit-version 1.6.4)
+
+### v1.6.4 → v1.6.5
+
+CI Gate hook 크로스플랫폼화 (bare `python` → `sh -c` 인터프리터 감지). **macOS 부트스트랩 프로젝트는 지금 hook 이 exit 127 로 조용히 실패 중일 수 있으니 우선 반영 권장**:
+
+- [ ] `.claude/settings.local.json` 의 `hooks.PostToolUse[].hooks[].command` 를 `sh -c 'command -v python3 >/dev/null 2>&1 && exec python3 .agent/scripts/ci_gate_<project>.py || exec python .agent/scripts/ci_gate_<project>.py'` 로 교체 (pre_gate/stop_gate 를 opt-in 등록했다면 그 command 도 동일 패턴으로). **주의**: 스크립트 종료코드에 `||` 를 걸지 말 것 - CI Gate 의 non-zero(위반 보고)를 폴백으로 오인해 이중 실행됨. `command -v` 로 인터프리터 존재만 감지.
+- [ ] 검증: `git status` 후 임의 파일 Edit → hook 무출력(정상) 확인. macOS 에서 종전 `python …` 이면 이전엔 조용히 실패했음(회귀 아님).
+- [ ] (선택) `.claude/agents/eval_harness.md` / `.claude/commands/dev_harness.md` 의 py_compile·JSON 파싱 self-check 를 `PY="$(command -v python3 || command -v python)"` + `"$PY"` 형으로 병합 (kit-managed 재배포로도 해결)
+- [ ] Windows 는 git-bash 필요 (Claude Code hook 기본 셸; PowerShell 폴백 환경은 `sh` 부재로 미동작)
+- [ ] manifest 재생성 (--kit-version 1.6.5)

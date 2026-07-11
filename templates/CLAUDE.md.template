@@ -53,7 +53,9 @@
 
 ## 3. CI Gate (자동 정적 검증)
 
-`.claude/settings.local.json` 의 PostToolUse hook 이 매 `Edit|Write` 시 `python .agent/scripts/ci_gate_{{PROJECT}}.py` 를 자동 호출. 정상 시 무출력. 위반 시 stderr 로 Claude 컨텍스트에 주입.
+`.claude/settings.local.json` 의 PostToolUse hook 이 매 `Edit|Write` 시 `ci_gate_{{PROJECT}}.py` 를 자동 호출. 정상 시 무출력. 위반 시 stderr 로 Claude 컨텍스트에 주입.
+
+> **인터프리터 규약 (윈도우/맥 공용)**: hook command 는 `sh -c 'command -v python3 … && exec python3 … || exec python …'` 감지형이다 — macOS(`python3` 전용)와 Windows(git-bash 기본, `python`)에서 동일하게 동작. `command -v` 로 **인터프리터 존재만** 판별하고 `exec` 하며, 스크립트 종료코드에 `||` 를 걸지 않는다(CI Gate non-zero 위반 보고를 폴백으로 오인해 이중 실행되는 것을 방지). Windows 는 git-bash 필요(PowerShell 폴백 시 `sh` 부재). 문서의 수동 명령은 `python3` 표기이며, `python3` 부재 Windows 는 `python` 으로 대체.
 
 | 검사 | 위반 시 |
 |---|---|

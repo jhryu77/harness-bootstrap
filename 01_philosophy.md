@@ -86,7 +86,7 @@ LLM 코딩 보조는 강력하지만 다음 실패 모드가 흔하다:
 "hooks": {
   "PostToolUse": [{
     "matcher": "Edit|Write",
-    "hooks": [{ "type": "command", "command": "python .agent/scripts/ci_gate_<project>.py" }]
+    "hooks": [{ "type": "command", "command": "sh -c 'command -v python3 >/dev/null 2>&1 && exec python3 .agent/scripts/ci_gate_<project>.py || exec python .agent/scripts/ci_gate_<project>.py'" }]
   }]
 }
 ```

@@ -42,13 +42,14 @@ done
 ### 2. settings.local.json JSON 파싱
 
 ```bash
-python -c "import json; json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK')"
+# 인터프리터 감지: macOS=python3 전용 / Windows(git-bash)=python. command -v 로 존재하는 쪽을 잡는다.
+"$(command -v python3 || command -v python)" -c "import json; json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK')"
 ```
 
 ### 3. CI Gate 스크립트 구문
 
 ```bash
-python -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py && echo "py_compile OK"
+"$(command -v python3 || command -v python)" -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py && echo "py_compile OK"
 ```
 
 ### 4. frontmatter 정합성

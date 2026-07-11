@@ -119,7 +119,7 @@ CLAUDE.md 가 200줄을 넘기 시작하면 **하네스 자체 변경 (plan_harn
   "hooks": {
     "PostToolUse": [{
       "matcher": "Edit|Write",
-      "hooks": [{ "type": "command", "command": "python .agent/scripts/ci_gate_<project>.py" }]
+      "hooks": [{ "type": "command", "command": "sh -c 'command -v python3 >/dev/null 2>&1 && exec python3 .agent/scripts/ci_gate_<project>.py || exec python .agent/scripts/ci_gate_<project>.py'" }]
     }]
   }
 }

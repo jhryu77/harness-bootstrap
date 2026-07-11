@@ -14,11 +14,13 @@ Claude Code 의 `.claude/settings.local.json` 의 `hooks.PostToolUse` 에 명시
     "matcher": "Edit|Write",
     "hooks": [{
       "type": "command",
-      "command": "python .agent/scripts/ci_gate_<project>.py"
+      "command": "sh -c 'command -v python3 >/dev/null 2>&1 && exec python3 .agent/scripts/ci_gate_<project>.py || exec python .agent/scripts/ci_gate_<project>.py'"
     }]
   }]
 }
 ```
+
+> **인터프리터 규약 (윈도우/맥 공용)**: command 를 `sh -c 'command -v python3 … && exec python3 … || exec python …'` 감지형으로 둔다. 이유 — macOS 는 `python` 이 PATH 에 없고 `python3` 만 있어 bare `python …` hook 은 **exit 127 로 조용히 실패**한다(Windows 는 보통 반대). `command -v` 로 **인터프리터 존재만** 판별해 `exec` 하며, **스크립트 종료코드에 `||` 를 걸지 않는다**(CI Gate 의 non-zero=위반보고를 폴백으로 오인해 이중 실행되는 것을 방지). Claude Code hook 은 macOS=sh, Windows=git-bash(기본) 로 실행되므로 이 한 줄이 양 OS 공용이다(Windows PowerShell 폴백 환경은 git-bash 설치 필요). 문서의 수동 명령은 `python3` 표기이며 `python3` 부재 Windows 는 `python` 으로 대체.
 
 훅 동작:
 1. Claude 가 Edit 또는 Write 도구 호출 완료
@@ -318,14 +320,14 @@ stdin JSON 의 file_path 추출 시 **여러 키를 모두 시도** (Claude Code
 ## 직접 호출 (개발 시 디버깅)
 
 ```bash
-python .agent/scripts/ci_gate_<project>.py <path/to/file>
+python3 .agent/scripts/ci_gate_<project>.py <path/to/file>
 ```
 
 가짜 임시 파일로 검사 시뮬:
 
 ```bash
 echo "test" > tmp_test.txt
-python .agent/scripts/ci_gate_<project>.py tmp_test.txt
+python3 .agent/scripts/ci_gate_<project>.py tmp_test.txt
 # → stderr: "임시 파일 prefix(tmp_*) ..."
 rm tmp_test.txt
 ```
@@ -337,8 +339,8 @@ rm tmp_test.txt
 `eval_agent_harness` 가 CI Gate 무결성을 점검할 때:
 
 ```bash
-python -m py_compile .agent/scripts/ci_gate_<project>.py && echo "py_compile OK"
-python -c "import json; json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK')"
+python3 -m py_compile .agent/scripts/ci_gate_<project>.py && echo "py_compile OK"
+python3 -c "import json; json.load(open('.claude/settings.local.json', encoding='utf-8')); print('JSON OK')"
 
 # hook 일치성: settings 의 command 와 실제 스크립트 경로 일치 확인
 grep -q "ci_gate_<project>.py" .claude/settings.local.json && \

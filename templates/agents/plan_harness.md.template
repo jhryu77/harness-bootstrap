@@ -13,7 +13,7 @@ model: inherit  # high/medium/low 로 명시적 지정 가능 - 05_subagent_desi
 
 ## 진입 시 자동 archive
 
-스크립트가 있으면 우선: `python .agent/scripts/archive_tasks.py --apply` (status: done 이동 + frontmatter 없는 폴더만 mtime fallback - status: active 는 오이동 없음)
+스크립트가 있으면 우선: `python3 .agent/scripts/archive_tasks.py --apply` (status: done 이동 + frontmatter 없는 폴더만 mtime fallback - status: active 는 오이동 없음)
 
 스크립트 없을 때 fallback (mtime 기준):
 
@@ -65,7 +65,7 @@ tier: M          # S | M | L - 03_workflow_patterns.md Tier 기준
 
 | AC-ID | 검증 명령 | pass 조건 |
 |---|---|---|
-| AC-1 | `python -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py` | exit 0 |
+| AC-1 | `python3 -m py_compile .agent/scripts/ci_gate_{{PROJECT}}.py` | exit 0 |
 | AC-2 | `grep -c "<신규 슬래시 description>" .claude/commands/<new>.md` | 출력 ≥ 1 |
 | AC-3 | ... | ... |
 

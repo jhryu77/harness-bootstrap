@@ -102,31 +102,33 @@ OTA 릴리스 (versionCode 증분 + Storage + ota_manifests):
 
 ## 6. 앱 비타협 항목
 
-| # | 항목 | 비고 |
+| ID | 항목 | 비고 |
 |---|---|---|
-| 1 | `<intent-filter>` 의 `MAIN`+`LAUNCHER` (앱 진입점) | 변경 = 사용자 컨펌 |
-| 2 | `packageName` / `applicationId` = `com.sampleapp.app` | 변경 = 사용자 컨펌 |
-| 3 | Room `@Database(version=N)` 증분 시 `Migration` 동반 | 누락 = 사용자 데이터 손실 |
-| 4 | Room entity 테이블/컬럼명 (`items`: `id`/`title`/`body`/`updated_at`) | 변경 = 마이그레이션 별도 task |
-| 5 | 릴리스 시그너처 config (keystore) | 추가/변경 = 사용자 컨펌 |
-| 6 | `INTERNET` 권한 (OTA 자가 업데이트) | 제거 시 업데이트 불가. 네트워크 호출 fail-soft try-catch 의무 |
-| 7 | `FileProvider` authority (`com.sampleapp.app.fileprovider`) | APK install 인텐트용. 변경 시 매니페스트+코드 동시 |
-| 8 | `DetailFragment.exported="false"` (딥링크 미노출) | 외부 임의 호출 차단 |
+| A1 | `<intent-filter>` 의 `MAIN`+`LAUNCHER` (앱 진입점) | 변경 = 사용자 컨펌 |
+| C1 | `packageName` / `applicationId` = `com.sampleapp.app` | 변경 = 사용자 컨펌 |
+| B1 | Room `@Database(version=N)` 증분 시 `Migration` 동반 | 누락 = 사용자 데이터 손실 |
+| B2 | Room entity 테이블/컬럼명 (`items`: `id`/`title`/`body`/`updated_at`) | 변경 = 마이그레이션 별도 task |
+| C2 | 릴리스 시그너처 config (keystore) | 추가/변경 = 사용자 컨펌 |
+| C3 | `INTERNET` 권한 (OTA 자가 업데이트) | 제거 시 업데이트 불가. 네트워크 호출 fail-soft try-catch 의무 |
+| A2 | `FileProvider` authority (`com.sampleapp.app.fileprovider`) | APK install 인텐트용. 변경 시 매니페스트+코드 동시 |
+| E1 | `DetailFragment.exported="false"` (딥링크 미노출) | 외부 임의 호출 차단 |
+
+> ID 는 영구불변 - 순번이 아니라 카테고리 문자(A~F)+번호. 다른 문서는 `비타협 C3` 처럼 ID 로 참조한다. 상세는 `08_immutables.md`.
 
 ---
 
 ## 7. 저장 / 상수 비타협 항목
 
-| # | 항목 | 비고 |
+| ID | 항목 | 비고 |
 |---|---|---|
-| 1 | `PAGE_SIZE 20` / `MAX_PAGE_SIZE 100` 페이지네이션 상수 | 동시 변경 금지. `ItemRepository.companion` 만 SSOT |
-| 2 | 페이지/개수 적용 시 `coerceIn(1, MAX_PAGE_SIZE)` 호출 | 클램프 누락 = FAIL |
-| 3 | `SYNC_INTERVAL_MIN 15` / `SYNC_INTERVAL_MAX 1440` (분) clamp | 동기화 간격. dp/절대 ms 혼용 금지 |
-| 4 | SharedPreferences 파일 분리 (`settings` ↔ `sync_state`) | 혼재 금지 |
-| 5 | `SortOrder` enum 순서 / `storageKey` 변경 금지 | 영구화 호환성 (마이그레이션 필요 시 별도 task) |
-| 6 | 리스트 그리드 column = 2 (sw600dp 는 3) | 리소스 qualifier 로만 분기. 변경 시 plan.md 근거 |
-| 7 | SwipeThreshold 96dp / RippleRadius 24dp 분리 | 제스처 영역 vs 시각 영역 |
-| 8 | `OTA_CHECK_TIMEOUT_MS = 10_000` | 매직 넘버는 의미 주석 동반 |
+| D1 | `PAGE_SIZE 20` / `MAX_PAGE_SIZE 100` 페이지네이션 상수 | 동시 변경 금지. `ItemRepository.companion` 만 SSOT |
+| D2 | 페이지/개수 적용 시 `coerceIn(1, MAX_PAGE_SIZE)` 호출 | 클램프 누락 = FAIL |
+| D3 | `SYNC_INTERVAL_MIN 15` / `SYNC_INTERVAL_MAX 1440` (분) clamp | 동기화 간격. dp/절대 ms 혼용 금지 |
+| B3 | SharedPreferences 파일 분리 (`settings` ↔ `sync_state`) | 혼재 금지 |
+| B4 | `SortOrder` enum 순서 / `storageKey` 변경 금지 | 영구화 호환성 (마이그레이션 필요 시 별도 task) |
+| D4 | 리스트 그리드 column = 2 (sw600dp 는 3) | 리소스 qualifier 로만 분기. 변경 시 plan.md 근거 |
+| D5 | SwipeThreshold 96dp / RippleRadius 24dp 분리 | 제스처 영역 vs 시각 영역 |
+| D6 | `OTA_CHECK_TIMEOUT_MS = 10_000` | 매직 넘버는 의미 주석 동반 |
 
 ---
 

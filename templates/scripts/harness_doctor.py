@@ -233,8 +233,10 @@ def check_9_brain_drift(root, brains):
             text = b.read_text(encoding="utf-8", errors="ignore")
         except OSError:
             continue
-        raw = re.search(r"last_synced_commit\s*[:=]\s*[`\"']?(\S+)", text)
-        m = re.search(r"last_synced_commit\s*[:=]\s*[`\"']?([0-9a-fA-F]{7,40})", text)
+        # 필드명 뒤 `**`(볼드) 도 허용한다. `> **last_synced_commit**: a8f504f` 같은 볼드 표기를
+        # 못 잡아 그 BRAIN 을 조용히 skip 하던 버그 수정 (필드명 뒤 \** + 값 앞 char class 에 * 추가).
+        raw = re.search(r"last_synced_commit\**\s*[:=]\s*[`\"'*]*(\S+)", text)
+        m = re.search(r"last_synced_commit\**\s*[:=]\s*[`\"'*]*([0-9a-fA-F]{7,40})", text)
         if not m:
             if raw:
                 checked = True

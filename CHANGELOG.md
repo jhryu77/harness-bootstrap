@@ -4,6 +4,30 @@
 
 ---
 
+## v1.7.0 - 2026-07-16
+
+> 사촌 프로젝트(R_D 하네스) 운영 중 드러난 개선을 역전파. 킷은 "1 repo = 1 하네스" 전제라 멀티프로젝트 전용 개선(CLAUDE.md 사본 동기화 / 중앙 프로젝트 목록 / gc_check)은 반영하지 않았다.
+
+### Fixed
+
+- **harness_doctor BRAIN 드리프트 정규식이 볼드 표기를 놓침** - `last_synced_commit\s*[:=]` 이 `> **last_synced_commit**: <hash>` 같은 **볼드** 표기를 못 잡아 그 BRAIN 을 **조용히 skip** 했다. 필드명 뒤 `\**` + 값 앞 char class 에 `*` 추가로 평문·볼드·백틱 모두 매칭. (`templates/scripts/harness_doctor.py`) 단일 repo `cwd=root` 가정은 그대로 유지(킷 모델에서 옳음).
+
+### Changed
+
+- **permissionMode: plan 의 근거 상태 정직화** - `05` 가 "permissionMode: plan 을 병행하면 **Bash 리다이렉션/heredoc 경유 쓰기까지 차단 → 자기 PASS 조작이 구조적으로 차단**"이라고 **단언**했으나 근거가 없었다. 공식 문서는 리다이렉트가 권한 프롬프트를 띄운다고만 하고 서브에이전트에서의 프롬프트 처리를 명시하지 않는다. "이중 봉쇄 → **2층 방어**", "차단됨 → 미확인"으로 정정하고 근거 상태 표를 추가. **이 구성이 지키는 것은 "에이전트가 쓰려 하지 않는다"이지 "물리적으로 못 쓴다"가 아니다.** (부트스트랩된 프로젝트에 거짓 보안 확신을 전파하던 문제)
+- **비타협 표: 순번 → 영구 ID** - `08` 표 첫 열을 `#`(순번) 에서 **카테고리 문자+번호 영구 ID**(A1/B1/D2…)로. 순번은 행이 늘 때마다 참조가 썩는다. 다른 문서는 `비타협 D2` 처럼 ID 로 참조하고, 폐기 ID 는 재사용하지 않는다. "표에 행 수 하드코딩 금지" 규율 추가. `examples/sampleapp_snapshot/CLAUDE.md` 동기화.
+
+### Added
+
+- **dev(메인세션) 루프 모델 티어링** - `model_policy.py` 는 서브에이전트만 티어링했는데, 정작 토큰을 가장 많이 쓰는 dev 는 메인세션 멀티턴이라 커버되지 않았다(커맨드 frontmatter model 은 "호출한 그 턴만" 유효 - 공식 문서). `set <tier> --with-session-baseline` 옵션으로 `settings.local.json` 의 model 도 세션 baseline 으로 설정해 dev 루프까지 티어링. `05` 에 "티어링 갭" 절 추가.
+- **sync_brain 서브에이전트 옵션 패턴** - `05` 에 "선택 패턴" 절 + `templates/agents/sync_brain.md.template`(옵션 자산). 기본값은 커맨드 유지. 컨텍스트 격리/모델 티어링이 필요할 때만 디스패처+서브에이전트로. PATCH/HANDOFF 반환 프로토콜(쓰기 안 줌). plan/eval 과 격리 이유가 다름(셀프 PASS 차단 아님)을 명시. "신규 에이전트는 만든 세션에서 호출 불가(레지스트리 세션 시작 시 고정)" 함정 문서화.
+
+### 결정 (반영하지 않음)
+
+- **CLAUDE.md 사본 동기화 / 중앙 projects.json / gc_check** - R_D 는 정션/하드링크로 CLAUDE.md 2벌을 동기화하고 중앙 프로젝트 목록을 두지만, 킷은 "1 repo = 1 하네스 + 단일 CLAUDE.md + 포인터(복사 금지)" 원칙이라 대응 개념이 없다. gc_check 은 R_D 에서도 규칙 대부분이 오탐으로 판명돼 미도입.
+
+---
+
 ## v1.6.5 - 2026-07-11
 
 ### Fixed

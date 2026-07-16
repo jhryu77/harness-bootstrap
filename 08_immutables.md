@@ -83,24 +83,28 @@ CLAUDE.md 가 가벼운 인지용, BRAIN.md 가 무거운 참조용. plan 에이
 ```markdown
 ## 6. 앱 비타협 항목
 
-| # | 항목 | ZONE | 비고 |
+| ID | 항목 | ZONE | 비고 |
 |---|---|---|---|
-| 1 | `<intent-filter>` 의 MAIN+LAUNCHER | Frozen | 변경 = 사용자 컨펌 |
-| 2 | `packageName` / `applicationId` | Frozen | 변경 = 사용자 컨펌 |
-| 3 | Room `@Database(version)` 증분 시 Migration 동반 | Frozen | 누락 = 데이터 손실 |
+| A1 | `<intent-filter>` 의 MAIN+LAUNCHER | Frozen | 변경 = 사용자 컨펌 |
+| C1 | `packageName` / `applicationId` | Frozen | 변경 = 사용자 컨펌 |
+| B1 | Room `@Database(version)` 증분 시 Migration 동반 | Frozen | 누락 = 데이터 손실 |
 | ... | ... | ... | ... |
 
 ## 7. 저장 / 상수 비타협 항목
 
-| # | 항목 | ZONE | 비고 |
+| ID | 항목 | ZONE | 비고 |
 |---|---|---|---|
-| 1 | `PAGE_SIZE 20 / MAX_PAGE_SIZE 100` 상수 | Frozen | 동시 변경 금지 |
-| 2 | 페이지 적용 시 `coerceIn(1, MAX_PAGE_SIZE)` 호출 | Frozen | 클램프 누락 = FAIL |
-| 3 | 리스트 그리드 column = 2 | Evolvable | 근거 명시 시 일반 task 경로에서 조정 가능 |
+| D1 | `PAGE_SIZE 20 / MAX_PAGE_SIZE 100` 상수 | Frozen | 동시 변경 금지 |
+| D2 | 페이지 적용 시 `coerceIn(1, MAX_PAGE_SIZE)` 호출 | Frozen | 클램프 누락 = FAIL |
+| D3 | 리스트 그리드 column = 2 | Evolvable | 근거 명시 시 일반 task 경로에서 조정 가능 |
 | ... | ... | ... | ... |
 ```
 
-**8개 이하** 가 인지 가능한 상한. 더 많으면 카테고리별로 표 분할.
+**ID 는 영구불변이다.** 첫 열은 순번(`#`)이 아니라 **카테고리 문자 + 번호**(A1/B1/C1/D1/E1/F1 — 위 A~F 카테고리에 대응)로 **영구 ID** 를 준다. 다른 문서가 `비타협 D2` 처럼 ID 로 참조하므로, **행이 늘거나 순서가 바뀌어도 ID 는 그대로 둔다.** 폐기된 항목의 ID 는 **재사용하지 않고 비워둔다**(참조 오염 방지). 새 항목은 **새 ID** 를 주고 기존 ID 를 재배치하지 않는다.
+
+> **순번(1·2·3…)으로 참조하지 말 것.** 순번은 행이 늘 때마다 썩는다. 마찬가지로 **표에 행 수를 하드코딩하지 말 것**("(7행)" 식) - 항목이 늘면 어긋난다.
+
+**표당 8개 이하** 가 인지 가능한 상한. 더 많으면 카테고리별로 표를 분할한다 (ID 의 카테고리 문자는 표를 나눠도 그대로 유지 - 참조가 안 깨진다).
 
 각 항목은 **1줄 명확**. 산문 설명은 BRAIN.md 로 보냄.
 
@@ -193,29 +197,29 @@ CLAUDE.md 가 가벼운 인지용, BRAIN.md 가 무거운 참조용. plan 에이
 
 ### CLAUDE.md §6 (앱 진입)
 
-| # | 항목 | ZONE |
+| ID | 항목 | ZONE |
 |---|---|---|
-| 1 | `<intent-filter>` 의 MAIN+LAUNCHER | Frozen |
-| 2 | `packageName` / `applicationId` = com.sampleapp.app | Frozen |
-| 3 | Room `@Database(version)` 증분 시 Migration 동반 | Frozen |
-| 4 | Room entity 테이블/컬럼명 (`items`) | Frozen |
-| 5 | 릴리스 시그너처 config | Frozen |
-| 6 | `INTERNET` 권한 (OTA) | Frozen |
-| 7 | `FileProvider` authority | Frozen |
-| 8 | `DetailFragment.exported="false"` | Frozen |
+| A1 | `<intent-filter>` 의 MAIN+LAUNCHER | Frozen |
+| C1 | `packageName` / `applicationId` = com.sampleapp.app | Frozen |
+| B1 | Room `@Database(version)` 증분 시 Migration 동반 | Frozen |
+| B2 | Room entity 테이블/컬럼명 (`items`) | Frozen |
+| C2 | 릴리스 시그너처 config | Frozen |
+| C3 | `INTERNET` 권한 (OTA) | Frozen |
+| A2 | `FileProvider` authority | Frozen |
+| E1 | `DetailFragment.exported="false"` | Frozen |
 
 ### CLAUDE.md §7 (저장 / 상수)
 
-| # | 항목 | ZONE |
+| ID | 항목 | ZONE |
 |---|---|---|
-| 1 | `PAGE_SIZE 20 / MAX_PAGE_SIZE 100` 상수 | Frozen |
-| 2 | 페이지 적용 시 `coerceIn(1, MAX_PAGE_SIZE)` 호출 | Frozen |
-| 3 | `SYNC_INTERVAL_MIN 15 / MAX 1440` (분) clamp | Frozen |
-| 4 | SharedPreferences 파일 분리 (`settings` ↔ `sync_state`) | Frozen |
-| 5 | `SortOrder` enum 순서 / `storageKey` 변경 금지 | Frozen |
-| 6 | 리스트 그리드 column = 2 | Frozen |
-| 7 | SwipeThreshold 96dp / RippleRadius 24dp 분리 | Frozen |
-| 8 | `OTA_CHECK_TIMEOUT_MS = 10_000` | Frozen |
+| D1 | `PAGE_SIZE 20 / MAX_PAGE_SIZE 100` 상수 | Frozen |
+| D2 | 페이지 적용 시 `coerceIn(1, MAX_PAGE_SIZE)` 호출 | Frozen |
+| D3 | `SYNC_INTERVAL_MIN 15 / MAX 1440` (분) clamp | Frozen |
+| B3 | SharedPreferences 파일 분리 (`settings` ↔ `sync_state`) | Frozen |
+| B4 | `SortOrder` enum 순서 / `storageKey` 변경 금지 | Frozen |
+| D4 | 리스트 그리드 column = 2 | Frozen |
+| D5 | SwipeThreshold 96dp / RippleRadius 24dp 분리 | Frozen |
+| D6 | `OTA_CHECK_TIMEOUT_MS = 10_000` | Frozen |
 
 8개씩 - 한 화면에 인지 가능한 한계.
 

@@ -42,7 +42,7 @@ task_<TS>_<slug>/
 - `handoff_<env>.md` - 다른 환경/사람에게 인계 (예: Mac → Windows 핸드오프)
 - `notes.md` - 작업 중 발견 사항
 
-result 는 eval 에이전트가 **YAML 텍스트로 반환**하고 **메인 세션이 파일로 저장**한다 (eval 은 Write 없음 + permissionMode: plan 이중 봉쇄). 형식:
+result 는 eval 에이전트가 **YAML 텍스트로 반환**하고 **메인 세션이 파일로 저장**한다 (eval 은 Write 없음 + permissionMode: plan 2층 방어). 형식:
 
 ```yaml
 status: PASS

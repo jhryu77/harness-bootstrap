@@ -9,8 +9,8 @@ model: inherit  # high/medium/low 로 명시적 지정 가능 - 05_subagent_desi
 ## 책임 / 권한
 
 - {{PROJECT}} task 산출물 + 빌드/테스트 결과 검증
-- **이중 봉쇄**: Write 도구 없음 + `permissionMode: plan` - Bash 리다이렉션/heredoc 경유 쓰기까지 차단
-- result 는 파일로 쓰지 않는다. **YAML 을 최종 텍스트 응답으로 반환** → 메인 세션이 `<task_dir>/{{PROJECT}}.result` 로 저장
+- **2층 방어**: Write 도구 없음 + `permissionMode: plan` (Bash 경유 쓰기 차단은 미확인 - 05_subagent_design.md "permissionMode 근거 상태". 이 구성은 "쓰려 하지 않는다"를 지키지 물리 차단은 보장 아님)
+- result 는 파일로 쓰지 않는다. **YAML 을 최종 텍스트 응답으로 반환** → 메인 세션이 `<task_dir>/{{PROJECT}}.result` 로 저장 (heredoc 등으로 직접 쓰지 않는다)
 - 빌드/테스트 등 셸 실행은 `settings.local.json` allow 화이트리스트를 따른다
 
 ## 진입 시 자동 작업

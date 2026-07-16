@@ -1,6 +1,6 @@
 ---
 name: eval_sampleapp
-description: sampleapp 구현 완료 후 평가. TaskList 완료율 / Kotlin 컴파일 / 앱 진입 인텐트 / 페이지네이션 상수 / Room·Prefs 키 일관성 검증 + PASS/FAIL 선언. 소스·하네스 파일 수정 금지. sampleapp.result 만 Bash heredoc 으로 작성 허용.
+description: sampleapp 구현 완료 후 평가. TaskList 완료율 / Kotlin 컴파일 / 앱 진입 인텐트 / 페이지네이션 상수 / Room·Prefs 키 일관성 검증 + PASS/FAIL 선언. 소스·하네스 파일 수정 금지. result 는 YAML 텍스트로 반환하고 기록은 메인 세션이 한다.
 model: sonnet
 tools:
   - Read
@@ -11,11 +11,12 @@ tools:
 disallowedTools:
   - Edit
   - Write
+permissionMode: plan
 ---
 
 # eval_sampleapp 서브에이전트
 
-당신은 sampleapp 작업 결과를 **평가** 하는 에이전트다. 어떤 코드도 수정하지 않으며, `sampleapp.result` 리포트만 Bash heredoc 으로 작성한다.
+당신은 sampleapp 작업 결과를 **평가** 하는 에이전트다. 어떤 코드도 수정하지 않으며, result 리포트를 **YAML 텍스트로 반환**한다 (기록은 메인 세션).
 
 ## 평가 단계
 
@@ -85,13 +86,11 @@ git diff --name-only HEAD
 | **FAIL:RE_PLAN** | 범위 이탈 (plan.md 에 없는 파일 변경) |
 | **FAIL:BLOCKER** | python / Gradle 환경 문제, 외부 의존 |
 
-### 8. 리포트 작성
+### 8. 리포트 반환 (텍스트)
 
-`.agent/tasks/task_${TS}/sampleapp.result` 파일을 Bash heredoc 으로 작성:
+result 를 **최종 텍스트 응답에 그대로 포함**한다 (파일로 직접 쓰지 않는다 - 메인 세션이 `.agent/tasks/task_${TS}/sampleapp.result` 로 저장). 형식:
 
-```bash
-TASK_DIR="$(ls -dt .agent/tasks/task_* 2>/dev/null | head -1)"
-cat > "$TASK_DIR/sampleapp.result" <<'REPORT_EOF'
+```
 RESULT: PASS
 DATE: 2026-05-04 12:34 KST
 
@@ -103,10 +102,7 @@ DATE: 2026-05-04 12:34 KST
 [6] 범위 이탈: 없음
 
 다음 액션: /sync_brain 또는 /commit_push (사용자 응답 후)
-REPORT_EOF
 ```
-
-`<<'REPORT_EOF'` 작은따옴표로 감싸 변수 확장 차단.
 
 ### 9. PASS 후 사용자 질문 (메인 세션에 그대로 반환)
 
@@ -127,6 +123,6 @@ REPORT_EOF
 
 ## 금지 사항
 
-- 어떤 코드/하네스 파일도 수정 금지 (Edit/Write disallowed)
-- `sampleapp.result` 파일은 Bash heredoc 으로만 작성 (Write 도구 미부여)
+- 어떤 코드/하네스 파일도 수정 금지 (Edit/Write disallowed + permissionMode: plan)
+- result 는 파일로 직접 쓰지 않고 **텍스트로 반환** - 메인 세션이 저장 (heredoc 등으로 쓰려 하지 않는다)
 - 사용자 응답 없이 후속 액션 자동 실행 금지

@@ -76,7 +76,7 @@ LLM 코딩 보조는 강력하지만 다음 실패 모드가 흔하다:
 - **plan_xxx**: Read / Glob / Grep / Bash / **Write** (단 tasks/ 하위만) / TaskCreate
 - **eval_xxx**: Read / Glob / Grep / Bash / TaskList (Write 없음 + permissionMode: plan - result 는 YAML 텍스트로 반환, 기록은 메인 세션)
 
-이로써 plan 에이전트가 코드를 수정하거나, eval 에이전트가 자기 PASS 결과를 임의로 조작하는 것을 구조적으로 차단한다.
+이로써 plan 에이전트의 코드 수정은 도구 부재로 막고(Edit 없음), eval 에이전트의 자기 PASS 조작은 result 를 텍스트로 반환하게 해 억제한다. (permissionMode: plan 이 Bash 경유 쓰기까지 물리적으로 막는지는 미확인 - 05_subagent_design.md "permissionMode 근거 상태". 이 구성은 "쓰려 하지 않는다"를 지킨다.)
 
 ### 원칙 5 - CI Gate hook
 

@@ -14,7 +14,8 @@
 
 ### Changed
 
-- **permissionMode: plan 의 근거 상태 정직화** - `05` 가 "permissionMode: plan 을 병행하면 **Bash 리다이렉션/heredoc 경유 쓰기까지 차단 → 자기 PASS 조작이 구조적으로 차단**"이라고 **단언**했으나 근거가 없었다. 공식 문서는 리다이렉트가 권한 프롬프트를 띄운다고만 하고 서브에이전트에서의 프롬프트 처리를 명시하지 않는다. "이중 봉쇄 → **2층 방어**", "차단됨 → 미확인"으로 정정하고 근거 상태 표를 추가. **이 구성이 지키는 것은 "에이전트가 쓰려 하지 않는다"이지 "물리적으로 못 쓴다"가 아니다.** (부트스트랩된 프로젝트에 거짓 보안 확신을 전파하던 문제)
+- **permissionMode: plan 의 근거 상태 정직화 (전수)** - "permissionMode: plan 을 병행하면 **Bash 리다이렉션/heredoc 경유 쓰기까지 차단 → 자기 PASS 조작이 구조적으로 차단**"이라는 **단언**이 근거 없이 **8개 파일에 복사**돼 있었다(05 + eval 에이전트/커맨드 템플릿 4종 + 01/07/BOOTSTRAP_PROMPT + harness_doctor check_5 + UPGRADE). 공식 문서는 리다이렉트가 권한 프롬프트를 띄운다고만 하고 서브에이전트에서의 프롬프트 처리를 명시하지 않는다. 전 파일에서 "이중 봉쇄 → **2층 방어**", "차단됨 → 미확인"으로 정정하고 05 에 근거 상태 표 추가. **이 구성이 지키는 것은 "에이전트가 쓰려 하지 않는다"이지 "물리적으로 못 쓴다"가 아니다.** (부트스트랩된 프로젝트에 거짓 보안 확신을 전파하던 문제 - `05` 만 두 벌로 갈라져 있던 게 아니라 복사본이 8곳이었다)
+- **예제 eval 에이전트를 현행 교리에 정렬** - `examples/sampleapp_snapshot/agents/eval_{sampleapp,harness,ota_release}.md` 가 **옛 패턴**(permissionMode 없음 + result 를 `cat > file <<EOF` heredoc 으로 직접 쓰기)으로 남아 템플릿(permissionMode: plan + 텍스트 반환)과 어긋나 있었다. harness_doctor check_5 도 통과 못 하는 상태. 3개 전부 `permissionMode: plan` 추가 + result 를 텍스트 반환 패턴으로 전환.
 - **비타협 표: 순번 → 영구 ID** - `08` 표 첫 열을 `#`(순번) 에서 **카테고리 문자+번호 영구 ID**(A1/B1/D2…)로. 순번은 행이 늘 때마다 참조가 썩는다. 다른 문서는 `비타협 D2` 처럼 ID 로 참조하고, 폐기 ID 는 재사용하지 않는다. "표에 행 수 하드코딩 금지" 규율 추가. `examples/sampleapp_snapshot/CLAUDE.md` 동기화.
 
 ### Added

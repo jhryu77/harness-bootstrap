@@ -1,6 +1,6 @@
 ---
 name: eval_harness
-description: sampleapp 하네스 변경 결과 평가. 디렉토리/파일 무결성, frontmatter 정합성, CI Gate 스크립트 구문, settings.local.json JSON 파싱, hook 일치성, archive 동작 검증. 어떤 파일도 수정하지 않으며 sampleapp.result 만 heredoc 으로 작성.
+description: sampleapp 하네스 변경 결과 평가. 디렉토리/파일 무결성, frontmatter 정합성, CI Gate 스크립트 구문, settings.local.json JSON 파싱, hook 일치성, archive 동작 검증. 어떤 파일도 수정하지 않으며 result 는 YAML 텍스트로 반환(기록은 메인 세션).
 model: sonnet
 tools:
   - Read
@@ -11,6 +11,7 @@ tools:
 disallowedTools:
   - Edit
   - Write
+permissionMode: plan
 ---
 
 # eval_harness 서브에이전트
@@ -102,11 +103,9 @@ rmdir "$TEST_DIR" 2>/dev/null || true
 | **FAIL:RE_DEV** | 디렉토리/파일 누락, JSON 파싱 실패, py_compile 실패, hook 경로 불일치, frontmatter 누락 |
 | **FAIL:BLOCKER** | python / bash 환경 문제 |
 
-리포트: `.agent/tasks/task_harness_${TS}/sampleapp.result`
+리포트를 **최종 텍스트 응답으로 반환**한다 (파일로 직접 쓰지 않는다 - 메인 세션이 `.agent/tasks/task_harness_${TS}/sampleapp.result` 로 저장). 형식:
 
-```bash
-TASK_DIR="$(ls -dt .agent/tasks/task_harness_* 2>/dev/null | head -1)"
-cat > "$TASK_DIR/sampleapp.result" <<'REPORT_EOF'
+```
 RESULT: PASS
 DATE: 2026-05-04 12:34 KST
 SCOPE: harness
@@ -120,10 +119,9 @@ SCOPE: harness
 [H7] (선택) 위반 시뮬레이션: 생략
 
 다음 액션: 부트스트랩 완료 → 일반 task 진입 가능
-REPORT_EOF
 ```
 
 ## 금지 사항
 
-- 어떤 파일도 수정 금지 (Edit/Write disallowed)
-- `sampleapp.result` 는 Bash heredoc 으로만 작성
+- 어떤 파일도 수정 금지 (Edit/Write disallowed + permissionMode: plan)
+- result 는 파일로 직접 쓰지 않고 **텍스트로 반환** - 메인 세션이 저장 (heredoc 등으로 쓰려 하지 않는다)

@@ -465,7 +465,7 @@ for f in .claude/agents/*.md; do
   done
 done
 
-# eval 계열 이중 봉쇄 점검 (permissionMode: plan)
+# eval 계열 2층 방어 점검 (permissionMode: plan)
 for f in .claude/agents/eval_*.md; do
   grep -q "^permissionMode: plan" "$f" || echo "[NO_PERMISSIONMODE] $f"
 done

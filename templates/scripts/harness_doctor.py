@@ -158,7 +158,11 @@ def check_4_agent_frontmatter(root):
 
 
 def check_5_eval_permission_mode(root):
-    """5. eval_*.md 의 permissionMode: plan (이중 봉쇄)"""
+    """5. eval_*.md 의 permissionMode: plan (2층 방어) 선언 확인.
+
+    disallowedTools(Write 제외) + permissionMode: plan 의 2층 방어를 선언했는지 본다.
+    이 검사가 확인하는 것은 "선언의 존재"이지 "Bash 경유 쓰기가 물리적으로 불가능함"이 아니다
+    (05_subagent_design.md "permissionMode 근거 상태" 참조 - 후자는 미확인)."""
     evals = sorted((root / ".claude" / "agents").glob("eval_*.md"))
     if not evals:
         report("WARN", ".claude/agents/eval_*.md 없음 (eval 에이전트 미배치)")
@@ -166,9 +170,9 @@ def check_5_eval_permission_mode(root):
     for e in evals:
         fm = parse_frontmatter(e) or []
         if any(re.match(r"^permissionMode\s*:\s*plan\s*$", line) for line in fm):
-            report("OK", f"eval 이중 봉쇄 확인 (permissionMode: plan): {e.name}")
+            report("OK", f"eval 2층 방어 확인 (permissionMode: plan): {e.name}")
         else:
-            report("FAIL", f"eval 이중 봉쇄 누락: {e.name} 에 permissionMode: plan 없음",
+            report("FAIL", f"eval 2층 방어 누락: {e.name} 에 permissionMode: plan 없음",
                    f"{e.name} frontmatter 에 'permissionMode: plan' 추가 (v1.2.0 마이그레이션, UPGRADE.md 참조)")
 
 

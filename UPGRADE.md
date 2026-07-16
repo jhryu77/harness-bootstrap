@@ -85,7 +85,7 @@
 
 기존 적용 프로젝트가 손으로 반영할 체크리스트:
 
-- [ ] `.claude/agents/eval_*.md` frontmatter 에 `permissionMode: plan` 추가 (**이중 봉쇄** - Write 도구 제외만으로는 Bash 경유 쓰기를 못 막음)
+- [ ] `.claude/agents/eval_*.md` frontmatter 에 `permissionMode: plan` 추가 (**2층 방어** - Write 도구 제외 위에 read-only 모드를 얹는다. Bash 경유 쓰기까지 물리 차단하는지는 미확인이므로, result 텍스트 반환을 함께 전환하는 게 핵심)
 - [ ] eval 계열 result 산출 방식 전환: heredoc 으로 `<task_dir>/*.result` 직접 쓰기 → **YAML 텍스트 반환** (기록: 메인 세션). eval_agent 커맨드/에이전트 본문의 절차 문구 갱신
 - [ ] plan 템플릿에 "수용 기준 (Binary AC)" 표 섹션 추가, eval 은 `ac_pass: N/M` 기록
 - [ ] 비타협 표에 ZONE 열 (Frozen / Evolvable) 추가

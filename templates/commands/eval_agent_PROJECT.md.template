@@ -50,7 +50,7 @@ follow_up:
 
 ## 권한
 
-서브에이전트는 Write 권한 없음 + `permissionMode: plan` 이중 봉쇄 - Bash 리다이렉션/heredoc 경유 쓰기까지 차단.
+서브에이전트는 Write 권한 없음 + `permissionMode: plan` 2층 방어 (Bash 경유 쓰기 차단은 미확인 - 05_subagent_design.md "permissionMode 근거 상태").
 result 는 텍스트 반환, 기록은 메인 세션. 소스 / 하네스 / Edit 일체 금지.
 
 ## PASS 후 (메인 세션)

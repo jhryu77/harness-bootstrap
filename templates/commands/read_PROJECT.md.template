@@ -1,0 +1,72 @@
+---
+description: {{PROJECT}} 현재 상태 빠른 파악 - BRAIN/STATE 로드 + 코드 인덱스 + 진입점 점검 + 다음 액션 제안
+---
+
+# /read_{{PROJECT}}
+
+{{PROJECT_TITLE}} 프로젝트의 현재 상태를 빠르게 파악한다.
+
+## 절차
+
+### 1. 컨텍스트 로드
+- `Read` `.agent/context/{{PROJECT_UPPER}}_BRAIN.md`
+- `Read` `.agent/context/{{PROJECT_UPPER}}_STATE.md`
+
+> 슬래시 커맨드는 프로젝트 루트(cwd) 에서 실행되므로 상대 경로 그대로 사용. OS 무관.
+
+### 2. 코드 인덱스 + 진입점 점검 (Bash, 한 번에)
+
+```bash
+echo "=== 소스 파일 ==="
+{{SOURCE_INDEX_COMMAND}}
+echo
+echo "=== {{ENTRY_POINT_LABEL}} ==="
+{{ENTRY_POINT_GREP}}
+echo
+echo "=== git 최근 5개 ==="
+git log --oneline -5 2>/dev/null || echo "(no git repo)"
+echo
+echo "=== 최근 task 폴더 ==="
+ls -dt .agent/tasks/task_* 2>/dev/null | head -5 || echo "(no tasks)"
+echo
+echo "=== 하네스 진화 상태 ==="
+ls -dt .agent/tasks/task_harness_* .agent/tasks/archive/task_harness_* 2>/dev/null | head -3 || echo "(no harness tasks)"
+```
+
+### 3. 출력 포맷 (메인 세션이 사용자에게)
+
+```
+## {{PROJECT}} 현재 상태
+
+### Phase 진행
+({{PROJECT_UPPER}}_STATE.md §1 표 그대로)
+
+### 구현된 화면 / 컴포넌트
+({{PROJECT_UPPER}}_STATE.md §4 표 그대로)
+
+### 영구화 키 인벤토리
+- (BRAIN §4 핵심 키만 요약)
+
+### 시스템 진입점
+- {{ENTRY_POINT_SUMMARY}}: (점검 결과)
+
+### 최근 task
+(목록 5개)
+
+### 하네스 진화 상태
+- 마지막 하네스 task 시점 표시 (task_harness_* 최신 1개). **90일 이상 하네스 변경이 없으면 "⚠️ 진화 부채: 마지막 하네스 진화가 N일 전입니다. /plan_agent_harness 점검 권장" 1줄 출력**
+
+### 다음 권장 액션
+- /plan_agent_{{PROJECT}} <목적> - 작업 계획 수립
+- /sync_brain - STATE 갱신 (필요 시)
+- /test_{{PROJECT}} - 수동 검증 체크리스트
+```
+
+<!--
+플레이스홀더:
+- {{PROJECT}} / {{PROJECT_UPPER}} / {{PROJECT_TITLE}}
+- {{SOURCE_INDEX_COMMAND}}: 예: 'find app/src -name "*.kt" 2>/dev/null | sort' / 'find src -name "*.ts" -not -path "*/node_modules/*" | sort'
+- {{ENTRY_POINT_LABEL}}: 예: "시스템 런처 인텐트 필터", "Next.js 라우트", "FastAPI 엔드포인트"
+- {{ENTRY_POINT_GREP}}: 진입점 검색 명령
+- {{ENTRY_POINT_SUMMARY}}: 한 줄 요약 라벨
+-->

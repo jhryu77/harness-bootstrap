@@ -1,0 +1,41 @@
+---
+description: {{PROJECT}} 작업 계획 수립 - plan_{{PROJECT}} 서브에이전트 호출
+---
+
+# /plan_agent_{{PROJECT}}
+
+`plan_{{PROJECT}}` 서브에이전트를 사용하여 작업 계획을 수립한다.
+
+## 사용
+
+```
+/plan_agent_{{PROJECT}} <목적>
+```
+
+## 절차
+
+메인 세션이 `subagent_type=plan_{{PROJECT}}` 으로 Agent 도구 호출. 서브에이전트는:
+
+1. `.agent/tasks/` 의 mtime 120분 초과 task 폴더를 `archive/` 로 이동
+2. 신규 `.agent/tasks/task_<YYYYMMDD>_<HHMM>_<slug>/` 폴더 생성
+3. Tier 판정 (자동 - `plan_{{PROJECT}}` 본문 §Tier 판정 참조) 후 `plan.md` 작성. Tier M/L 만 `tasklist.md` 추가 작성
+
+## 산출물
+
+- `.agent/tasks/task_<TS>_<slug>/plan.md` - 변경 범위(Tier 포함) / 영향 평가 / **수용 기준(Binary AC) 표** / 변경 순서 / 사용자 컨펌. Tier S 는 리스크/의존성/후속task 섹션 생략 가능
+- `.agent/tasks/task_<TS>_<slug>/tasklist.md` - 체크박스 형식 실행 단위 (Tier M/L 만)
+
+## 권한
+
+서브에이전트는 Write 권한이 `.agent/tasks/task_*/` 하위만. 코드 / `.claude/` / `.agent/context/` / `CLAUDE.md` 수정 불가.
+
+## (Tier M/L) plan 감사 게이트
+
+plan 완료 후 Tier M/L 은 메인 세션이 `eval_{{PROJECT}}` 를 **plan 감사 모드**로 호출한다 (Tier S 는 생략 가능).
+
+- 감사 FAIL → plan 보강 → 재감사 (같은 plan 상한 3회 - 3회 FAIL 시 사용자 에스컬레이션)
+- 감사 PASS 후에도 **HUMAN GATE** - 구현 착수는 사용자 승인으로만 (자율 bypass 금지)
+
+## 다음
+
+`/dev_{{PROJECT}}` 로 메인 세션이 plan 에 따라 코드 편집.

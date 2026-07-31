@@ -1,0 +1,23 @@
+name: domain-terms
+
+# 레퍼런스 프로젝트 도메인 용어가 배포물에 다시 새어 들어가는 것을 막는다.
+# 로컬 git hook 은 clone 시 따라가지 않으므로 CI 에서 강제한다.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: 도메인 용어 검사
+        run: python scripts/check_domain_terms.py

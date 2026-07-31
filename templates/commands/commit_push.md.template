@@ -1,0 +1,99 @@
+---
+description: git commit + push 자동화 - 자동 스테이징 필터 + 메시지 type 선택
+---
+
+# /commit_push
+
+git 변경사항을 커밋하고 원격으로 푸시한다.
+
+## 절차
+
+### 1. 상태 확인 (Bash, 병렬)
+
+```bash
+git status --short
+git diff --stat
+git log --oneline -3
+```
+
+### 2. 자동 스테이징 필터
+
+다음 패턴은 **자동 스테이징 금지** - 사용자가 명시 요청 시에만 add:
+
+{{NO_AUTOSTAGE_PATTERNS_LIST}}
+
+### 3. 커밋 메시지 작성
+
+형식: `<type>: <한 줄 요약>`
+
+- `type` ∈ {{COMMIT_TYPE_LIST}}
+- 메시지는 **why** 중심 1~2줄. **what** 은 diff 가 보여준다
+- 한글 / 영어는 프로젝트 통신 언어에 맞춤 ({{LANGUAGE}})
+
+### 4. Co-Authored-By 정책
+
+**Co-Authored-By 라인 {{COAUTHORED_BY}}**.
+
+{{COAUTHORED_BY_EXPLANATION}}
+
+### 5. 커밋 + 푸시
+
+```bash
+git add <명시 파일들>
+git commit -m "$(cat <<'EOF'
+<type>: <한 줄 요약>
+
+<상세 1~2줄 - why 중심>
+EOF
+)"
+git push origin <현재 브랜치>
+```
+
+main / master 로의 force push 는 사용자 명시 요청 시에만.
+
+## 출력
+
+```
+## /commit_push 완료
+
+### Commit
+<commit SHA> <type>: <요약>
+
+### Pushed
+<remote>/<branch>
+
+### 다음
+- (있다면) follow-up 작업
+```
+
+## 세션 핸드오프 블록 (푸시 후 출력)
+
+푸시 완료 보고 직후, 아래 3블록을 이어서 출력한다:
+
+```
+## 핸드오프 - 다음 세션/작업자를 위해
+
+### 1. 전제검증 (resume 시 최초 실행)
+- git log --oneline -3 이 <방금 커밋 SHA> 로 시작하는지
+- /read_{{PROJECT}} 로 BRAIN/STATE 로드 (STATE §6 최신 task 가 이번 task 인지)
+
+### 2. 실행 명령 (검증 재현)
+- (이번 task 의 AC 표 핵심 명령 1~3개 그대로)
+
+### 3. 다음 액션
+- (follow_up / 후속 task 후보 - plan.md §후속 task 표 기반)
+```
+
+규칙: 이 블록은 STATE.md 가 아니라 **대화 출력** 이다 - 세션 경계에서 사람이 복사해 넘길 수 있는 paste-ready 형태.
+
+<!--
+플레이스홀더:
+- {{NO_AUTOSTAGE_PATTERNS_LIST}}:
+   "- `*.keystore` `*.jks` `*.p12` `.env` `.env.*` `local.properties`
+    - `.agent/tasks/*.result` (eval 결과는 환경 의존)
+    - `tmp/` (임시 작업 폴더)"
+- {{COMMIT_TYPE_LIST}}: 예: "추가 | 갱신 | 수정 | 리팩터 | 테스트 | 문서" 또는 "feat | fix | refactor | test | docs"
+- {{LANGUAGE}}: "한국어" / "English"
+- {{COAUTHORED_BY}}: "금지" / "허용"
+- {{COAUTHORED_BY_EXPLANATION}}: 금지인 경우 "Claude / Co-Authored-By 라인 자동 생략." 허용인 경우 "Claude 와 함께 작업한 commit 에는 Co-Authored-By 라인 포함."
+-->

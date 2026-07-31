@@ -1,0 +1,192 @@
+# {{PROJECT_UPPER}}_BRAIN
+
+> **마지막 갱신**: YYYY-MM-DD
+>
+> 이 파일은 **순수 아키텍처/스펙 지식 베이스** - 패키지·모듈 구조·핵심 클래스 책임·영구화 키 인벤토리·빌드/의존성 등 **저빈도 갱신** 정보만 둔다.
+> 시점 정보(Phase 진행도 · 구현 화면 · 최근 task 요약)는 [`{{PROJECT_UPPER}}_STATE.md`](./{{PROJECT_UPPER}}_STATE.md) 참조 → `/sync_brain` 의 기본 갱신 대상.
+
+---
+
+## 1. 제품 요약
+
+| 항목 | 값 |
+|---|---|
+| 분류 | {{CATEGORY}} |
+| 패키지 / 네임스페이스 | {{PACKAGE}} |
+| 프로젝트 루트 | {{PROJECT_ROOT}} |
+| 모듈 구성 | {{MODULES}} |
+| UI 프레임워크 | {{UI_FRAMEWORK}} |
+| 통신 언어 | {{LANGUAGE}} |
+
+---
+
+## 2. 모듈 디렉토리 트리
+
+```
+{{DIRECTORY_TREE_FULL}}
+```
+
+루트 직접 `.{{LANG_EXT}}` 생성 금지. 반드시 정해진 위치 하위.
+
+---
+
+## 3. 핵심 클래스 / 엔드포인트 책임
+
+| 이름 | 위치 | 책임 |
+|---|---|---|
+| **{{CLASS_OR_ROUTE_1}}** | `{{LOCATION_1}}` | {{RESPONSIBILITY_1}} |
+| **{{CLASS_OR_ROUTE_2}}** | `{{LOCATION_2}}` | {{RESPONSIBILITY_2}} |
+| ... | ... | ... |
+
+---
+
+## 4. 영구화 키 인벤토리 (변경 시 마이그레이션 필수)
+
+### 4.1 핵심 데이터 (변경 = 사용자 데이터 손실)
+
+| 저장소 | 키 | 타입 | 의미 |
+|---|---|---|---|
+| {{STORE_1}} | {{KEY_1}} | {{TYPE_1}} | {{MEANING_1}} |
+| ... | ... | ... | ... |
+
+### 4.2 전체 인벤토리
+
+| 저장소 / 파일 | 클래스 / 모듈 | 용도 | Phase |
+|---|---|---|---|
+| {{STORE_X}} | {{CLASS_X}} | {{USE_X}} | {{PHASE_X}} |
+| ... | ... | ... | ... |
+
+### 4.3 불변 규칙
+
+- {{INVARIANT_RULE_1}}
+- {{INVARIANT_RULE_2}}
+- 신규 키 추가는 OK - 기존 사용자 데이터 영향 0
+- 키명 / 파일명 변경 시 **별도 마이그레이션 task** 필수
+
+---
+
+## 5. 빌드 / 의존성
+
+| 항목 | 값 |
+|---|---|
+| 언어 / 컴파일러 | {{COMPILER}} |
+| 빌드 도구 | {{BUILD_TOOL_VERSION}} |
+| 의존성 매니저 | {{DEP_MANAGER}} |
+| compileSdk / target / minSdk | {{SDK_VERSIONS}} (Android) |
+| Node / TS 버전 | {{NODE_TS}} (TypeScript) |
+| versionCode / versionName | {{VERSION_RANGE}} (시점값은 STATE 참조) |
+
+주요 의존성 ({{DEP_MANIFEST}}):
+- {{DEP_1}}
+- {{DEP_2}}
+- ...
+
+테스트 프레임워크: {{TEST_FRAMEWORK}}
+
+---
+
+## 6. 시스템 권한 / 외부 인터페이스
+
+{{PERMISSIONS_SECTION}}
+
+**fail-soft 가정**: {{FAIL_SOFT_NOTE}}
+
+사용 중인 hidden API / 비공개 인터페이스:
+- {{HIDDEN_API_1}}
+- ...
+
+---
+
+## 7. 시스템 진입점
+
+{{ENTRY_POINTS_SECTION}}
+
+**비타협 항목**:
+- {{ENTRY_INVARIANT_1}}
+- ...
+
+---
+
+## 8. 빌드 커맨드
+
+```{{SHELL_HINT}}
+{{BUILD_COMMANDS_FULL}}
+```
+
+**산출물**: `{{BUILD_OUTPUT}}`
+
+---
+
+## 9. 영역별 비타협 항목 (상세)
+
+| 영역 | 규칙 | 매직 넘버 | 변경 시 마이그레이션 |
+|---|---|---|---|
+| {{AREA_1}} | {{RULE_1}} | {{MAGIC_1}} | {{MIGRATION_1}} |
+| {{AREA_2}} | {{RULE_2}} | {{MAGIC_2}} | {{MIGRATION_2}} |
+| ... | ... | ... | ... |
+
+---
+
+## 10. 참조 / 외부 의존
+
+- 외부 sibling 프로젝트 의존: {{SIBLING_DEPS}}
+- 외부 API / 서버 의존: {{API_DEPS}}
+- 외부 디자인 SSOT: {{DESIGN_SSOT}}
+
+---
+
+## 11. (선택) 참조 분석 / 경쟁사
+
+같은 카테고리의 시판 제품 / 경쟁 라이브러리에 대한 reverse 분석 / 비교표.
+**마케팅 / 기술 결정 근거 자료**. 우리 코드와는 무관.
+
+- 분석 대상: {{COMPETITOR_NAME}}
+- 분석 결과 위치: `.agent/tasks/task_<TS>_<analysis>/analysis_report.md`
+- 핵심 차별 포인트: {{DIFFERENTIATION_BRIEF}}
+
+<!--
+플레이스홀더 가이드:
+- {{PROJECT_UPPER}}: 대문자 슬러그
+- {{CATEGORY}}: 분류 한 줄
+- {{PACKAGE}}: 패키지/네임스페이스
+- {{PROJECT_ROOT}}: 절대 경로 (Mac/Windows 다른 경우 둘 다 명시 OK)
+- {{MODULES}}: 모듈 구성
+- {{UI_FRAMEWORK}}: UI 스택
+- {{LANGUAGE}}: 통신 언어
+- {{DIRECTORY_TREE_FULL}}: 상세 디렉토리 트리 (find 결과 정리)
+- {{LANG_EXT}}: 코드 확장자. 예: "kt", "ts", "py"
+- {{CLASS_OR_ROUTE_*}}: 클래스명 또는 라우트 경로
+- {{LOCATION_*}}: 파일 경로
+- {{RESPONSIBILITY_*}}: 한 줄 책임
+- {{STORE_*}}: SharedPreferences 파일명 또는 DB 테이블명
+- {{KEY_*}}: 키명
+- {{TYPE_*}}: 타입
+- {{MEANING_*}}: 의미
+- {{PHASE_*}}: 도입 Phase
+- {{INVARIANT_RULE_*}}: 불변 규칙
+- {{COMPILER}}: 컴파일러 버전. 예: "Kotlin 2.0.21 / Java 17"
+- {{BUILD_TOOL_VERSION}}: 빌드 도구 버전
+- {{DEP_MANAGER}}: 의존성 매니저
+- {{SDK_VERSIONS}}: Android 만 해당
+- {{NODE_TS}}: Node/TS 버전. TypeScript 만 해당
+- {{VERSION_RANGE}}: 버전 범위. 예: "1.x (시점값은 STATE)"
+- {{DEP_MANIFEST}}: 의존성 매니페스트 위치. 예: "gradle/libs.versions.toml", "package.json"
+- {{TEST_FRAMEWORK}}: 테스트 프레임워크. 없으면 "미포함"
+- {{PERMISSIONS_SECTION}}: 권한 표 (있는 경우)
+- {{FAIL_SOFT_NOTE}}: fail-soft 동작 메모
+- {{HIDDEN_API_*}}: hidden / private API 목록
+- {{ENTRY_POINTS_SECTION}}: 진입점 (intent-filter / 라우트 표)
+- {{ENTRY_INVARIANT_*}}: 진입점 비타협 규칙
+- {{SHELL_HINT}}: "bash", "powershell"
+- {{BUILD_COMMANDS_FULL}}: 빌드 명령 전체
+- {{BUILD_OUTPUT}}: 산출물 경로
+- {{AREA_*}}: 비타협 영역
+- {{RULE_*}}: 규칙
+- {{MAGIC_*}}: 매직 넘버
+- {{MIGRATION_*}}: 마이그레이션 절차
+- {{SIBLING_DEPS}}: sibling repo 의존
+- {{API_DEPS}}: 외부 API
+- {{DESIGN_SSOT}}: 디자인 SSOT
+- {{COMPETITOR_NAME}}: 경쟁사 이름 (선택 - 분석 안 했으면 §11 전체 삭제)
+- {{DIFFERENTIATION_BRIEF}}: 차별 포인트
+-->
